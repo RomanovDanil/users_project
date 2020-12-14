@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 //components
 import Registration from '@/components/pages/registration/registration'
 import Login from '@/components/pages/login/login'
+import Profile from '@/components/pages/profile/profile'
 
 Vue.use(VueRouter)
 
@@ -19,17 +20,24 @@ const router = new VueRouter({
       path: '/login',
       name: 'Login',
       component: Login
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: Profile
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
-  const user = JSON.parse(localStorage.getItem('user'))
-  if (user) {
-    next()
+  const authRequired = to.path != '/registration' && to.path != '/login';
+  const loggedIn = localStorage.getItem('user');
+
+  if (authRequired && !loggedIn) {
+    next('/login');
   } else {
-    router.push('/login')
+    next();
   }
-})
+});
 
 export default router

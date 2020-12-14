@@ -1,7 +1,9 @@
 import UserData from './userData'
 
 export default class User {
-    constructor(email, password, firstName, secondName, thirdName, country) {
+    constructor(id, token, email, password, firstName, secondName, thirdName, country, image) {
+        this.id = id;
+        this.token = token;
         this.username = username;
         this.email = email;
         this.password = password;
@@ -9,7 +11,8 @@ export default class User {
             firstName,
             secondName,
             thirdName,
-            country
+            country,
+            image
         )
     }
 }

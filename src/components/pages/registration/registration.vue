@@ -10,7 +10,7 @@
                     </v-toolbar>
                                     
                     <v-card-text>
-                        <v-form v-model="isValid">
+                        <v-form v-model="isValid" :disabled="!expectAnswer">
                             <v-text-field label="Email"
                                         v-model="email"
                                         prepend-icon="alternate_email"
@@ -78,14 +78,23 @@
                                         required>   
                             </v-select>
 
-                            <v-btn color="light-blue lighten-1" @click.native="submitRegistrate()" :disabled="!isValid">Create account</v-btn>
+                            <v-file-input
+                                        v-model="image"
+                                        :rules="image_rules"
+                                        accept="image/png, image/jpeg, image/bmp"
+                                        placeholder="Pick an avatar"
+                                        prepend-icon="camera_alt"
+                                        label="Avatar"
+                                        >
+                            </v-file-input>
+
+                            <v-btn color="light-blue lighten-1" @click.native="submitRegistrate()" :disabled="!isValid" :loading="loading">Sign up</v-btn>
                         </v-form>
                     </v-card-text>
 
                     <v-col cols="12">
                         <div class="text-body text-center">
-                            Уже зарегистрированы?
-                            <router-link :to="'/login'">Авторизация</router-link>
+                            <router-link :to="'/login'">Sign In</router-link>
                         </div>
                     </v-col>
                 </v-card>
@@ -113,22 +122,24 @@
     export default {
         name: "Registration",
         computed: {
-            ...mapGetters(['COUNTRIES', 'LOGGEDIN']),
+            ...mapGetters(['countries','country']),
             passwordConfirmationRule: function() {
                 return () => (this.password === this.repeatPassword) || 'Passwords must match'
+            },
+            loggedIn(){
+                return this.$store.state.auth.status.loggedIn;
             }
         },
-        async created() {
-            await this.GET_COUNTRIES();
-        },
-        mounted() {
-            if (this.LOGGEDIN) {
-                router.push('/profile');
+        created() {
+            if (this.loggedIn) {
+                this.$router.push('/profile');
             }
+            this.getCountries();
         },
         data: () => ({
             snackbar: false,
             isValid: true,
+            loading: false,
             registratePasswordVisible: false,
             registratePasswordRepeatVisible: false,
             email: '',
@@ -137,8 +148,8 @@
             firstName: '',
             secondName: '',
             thirdName: '',
-            country: {},
             message: '',
+            image:{},
             password_rules: [ 
                 (v) => !!v || 'Password is required', 
                 (v) => (v && v.length >= 5) || 'Password must have 5+ characters',
@@ -150,34 +161,39 @@
                 (v) => !!v || 'Email is required', 
                 (v) => /.+@.+/.test(v) || 'E-mail must be valid' 
             ],
+            image_rules: [
+                 value => !value || value.size < 2000000 || 'Avatar size should be less than 2 MB!',
+    ]       ,
             repeat_password_rules: {
                 required: v => !!v || 'Password is required'
             }
         }),
         methods: {
-            ...mapActions(['GET_COUNTRIES','REGISTRATE']),
-            submitRegistrate () {
-                this.REGISTRATE( 
+            ...mapActions(['getCountries']),
+            async submitRegistrate () {
+                this.loading = true
+                await this.$store.dispatch(
+                    'auth/registrate', 
                     {
-                        email          :this.email, 
-                        password       :this.password, 
-                        repeatPassword :this.repeatPassword, 
-                        firstName      :this.firstName, 
-                        secondName     :this.secondName, 
-                        thirdName      :this.thirdName, 
-                        country        :this.country._id
-                    }
-                ).then(
-                    data => {
-                        console.log(data);
-                    },
-                    error => {
-                        this.snackbar = true
-                        this.message = (error.response && error.response.data) ||
-                            error.message ||
-                            error.toString();
+                        email: this.email,
+                        password: this.password, 
+                        repeatPassword: this.repeatPassword,
+                        firstName: this.firstName,
+                        secondName: this.secondName,
+                        thirdName: this.thirdName,
+                        country: this.country._id,
+                        image: this.image
                     }
                 )
+                .then(data => {
+                    this.$router.push('/login')
+                })
+                .catch(data => {
+                    console.log(data)
+                    this.message = data.message
+                    this.snackbar = true;
+                });
+                this.loading = false;
             }
         }
     }

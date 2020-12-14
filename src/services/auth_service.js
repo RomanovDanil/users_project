@@ -1,4 +1,5 @@
 import Axios from 'axios'
+import User from '../models/user'
 
 //адрес api
 const UsersAPI = `http://${window.location.hostname}:5000`
@@ -31,15 +32,14 @@ class AuthService{
                 `${UsersAPI}/api/auth/login`,
                 user
             )
-            .then(responce => {
-                if(responce.data.token){
+            .then(response => {
+                if(response.data.token){
                     localStorage.setItem('user', JSON.stringify(response.data))
                 }
-                return {status:true, data:response.data}
+                return Promise.resolve(response.data)
             })
-            .catch(responce => {
-                console.log(responce)
-                return {status:false, data:responce.data}
+            .catch(({response: {data}}) =>{
+                return Promise.reject(data)
             })
     }
 

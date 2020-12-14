@@ -10,7 +10,7 @@
                     </v-toolbar>
                                     
                     <v-card-text>
-                        <v-form v-model="validLogin">
+                        <v-form v-model="isValid">
                             <v-text-field label="Email"
                                         v-model="email"
                                         prepend-icon="alternate_email"
@@ -20,19 +20,32 @@
                             </v-text-field>
 
                             <v-text-field label="Password"
-                                v-model="password"
-                                prepend-icon="lock"
-                                :rules="password_rules"
-                                :append-icon="registratePasswordVisible ? 'visibility' : 'visibility_off'"
-                                @click:append="() => (registratePasswordVisible = !registratePasswordVisible)"
-                                :type="registratePasswordVisible ? 'text' : 'password'"
-                                color="light-blue lighten-1"
-                                required>
+                                        v-model="password"
+                                        prepend-icon="lock"
+                                        :rules="password_rules"
+                                        :append-icon="registratePasswordVisible ? 'visibility' : 'visibility_off'"
+                                        @click:append="() => (registratePasswordVisible = !registratePasswordVisible)"
+                                        :type="registratePasswordVisible ? 'text' : 'password'"
+                                        color="light-blue lighten-1"
+                                        required>
                             </v-text-field>
 
-                            <v-btn color="light-blue lighten-1" @click.native="submitLogin()">Login</v-btn>
+                            <v-btn 
+                                color="light-blue lighten-1" 
+                                @click.native="submitLogin()" 
+                                :disabled="!isValid"
+                                :loading="loading"
+                            >
+                                Login
+                            </v-btn>
                         </v-form>
                     </v-card-text>
+
+                    <v-col cols="12">
+                        <div class="text-body text-center">
+                            <router-link :to="'/registration'">Регистрация</router-link>
+                        </div>
+                    </v-col>
                 </v-card>
         
                 <v-snackbar timeout="6000"
@@ -51,11 +64,22 @@
 <script>
     //импорт функциональных опций
     import authService from '@/services/auth_service'
-    
+
     export default {
+        computed: {
+            loggedIn(){
+                return this.$store.state.auth.status.loggedIn;
+            }
+        },
+        created() {
+            if (this.loggedIn) {
+                this.$router.push('/profile');
+            }
+        },
         data: () => ({
             snackbar: false,
-            validLogin: false,
+            isValid: true,
+            loading: false,
             registratePasswordVisible: false,
             password_rules: [ 
                 (v) => !!v || 'Password is required', 
@@ -74,8 +98,62 @@
         }),
         methods: {
             async submitLogin () {
-                await authService.login(this, {email, password}, '/')
+                this.loading = true
+                await this.$store.dispatch(
+                    'auth/login', 
+                    {
+                        email: this.email,
+                        password: this.password
+                    }
+                )
+                .then(data => {
+                    this.$router.push('/profile')
+                })
+                .catch(data => {
+                    this.message = data.message
+                    this.snackbar = true;
+                });
+                this.loading = false
             }
         }
     }
 </script>
+
+<style>
+    .custom-loader {
+        animation: loader 1s infinite;
+        display: flex;
+    }
+    @-moz-keyframes loader {
+        from {
+            transform: rotate(0);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @-webkit-keyframes loader {
+        from {
+            transform: rotate(0);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @-o-keyframes loader {
+        from {
+            transform: rotate(0);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    @keyframes loader {
+        from {
+            transform: rotate(0);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>

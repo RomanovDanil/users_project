@@ -9,35 +9,52 @@ export const auth = {
   namespaced: true,
   state: initialState,
   actions: {
-    LOGIN: async (context, user) => {
-      return await AuthService.login(user).then(
-        user => {
-            context.commit('loginSuccess', user);
-            return Promise.resolve(user);
-        },
-        error => {
-            context.commit('loginFailure');
-            return Promise.reject(error);
+    login: async (context, user) => {
+      return await AuthService.login(user)
+      // .then(
+      //   user => {
+      //       context.commit('loginSuccess', user);
+      //       return Promise.resolve(user);
+      //   },
+      //   error => {
+      //       context.commit('loginFailure');
+      //       return Promise.reject(error);
+      //   }
+      // )
+      .then(data => {
+            console.log({status:"success", data})
+            context.commit('loginSuccess', data);
+            return Promise.resolve(data);
         }
-      );
+      )
+      .catch(data => {
+            console.log(data)
+            context.commit('loginFailure');
+            return Promise.reject(data);
+        }
+      )
     },
-    LOGOUT: (context) => {
+    logout: (context) => {
         AuthService.logout();
         context.commit('logout');
     },
-    REGISTRATE: async (context, user) => {
-      return await AuthService.register(user).then(
-        response => {
+    registrate: async (context, user) => {
+      return await AuthService.registrate(user)
+      .then(response => {
+            console.log("success")
             context.commit('registerSuccess');
             return Promise.resolve(response.data);
-        },
-        error => {
-            context.commit('registerFailure');
-            return Promise.reject(error);
         }
-      );
+      )
+      .catch(({response: {data}}) => {
+            console.log(data)
+            context.commit('registerFailure');
+            return Promise.reject(data);
+        }
+      )
     }
   },
+
   mutations: {
     loginSuccess(state, user) {
         state.status.loggedIn = true;
@@ -59,7 +76,7 @@ export const auth = {
     }
   },
   getters: {
-    LOGGEDIN: state => {
+    loggedIn: state => {
       return state.initialState.status
     }
   }
