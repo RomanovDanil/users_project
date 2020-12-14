@@ -13,6 +13,14 @@ const schema = new Schema({
     userData:{
         type     : Types.ObjectId,
         ref      : "UserData"
+    },
+    confirmed:{
+        type     : Boolean,
+        default  : true
+    },
+    deleted:{
+        type     : Boolean,
+        default  : false
     }
 });
 

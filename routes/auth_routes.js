@@ -8,6 +8,7 @@ const config      = require('config')
 const multer      = require('multer')
 const path        = require('path')
 const {check, validationResult} = require('express-validator')
+const { exception } = require("console")
 
 const router = Router()
 
@@ -132,27 +133,43 @@ router.post(
         const {email, password} = req.body
         
         //поиск пользователя в базе
-        const curUser = await User.findOne({email}, {confirmed:true}).populate('userData')
+        const curUser = await (await User.findOne({email:email,confirmed:true,deleted:false})
+            .populate({
+                path:'userData', 
+                populate:{
+                    path: 'country'
+                },
+                populate:{
+                    path: 'role'
+                }
+            })
+        )
+
         if(!curUser){
             return res.status(400).json({message:'User is not exists'})
         }
 
-        const isMatchPassword = await bcrypt.compare(
-            bcrypt.hash(password,15), 
-            curUser.password
-        )
-
-        if(!isMatchPassword){
-            return res.status(400).json({message: 'Email or password entered incorrectly'})
-        }
-        
-        const token = jwt.sign(
-            {userId: curUser.id},
-            config.get('jwtSecretKey'),
-            {expiresIn: '1d'}
-        )
-
-        res.status(200).json({token})
+        bcrypt.compare(password, curUser.password, function(err, result){
+            if(err)
+                return res.status(500).json({message: err.message})
+            else if(!result){
+                return res.status(400).json({message: 'Email or password entered incorrectly'})
+            }
+            else {
+                const token = jwt.sign(
+                    {user: curUser},
+                    config.get('jwtSecretKey'),
+                    {expiresIn: '1d'}
+                )
+                return res.status(200).json({
+                    token,
+                    id: curUser._id,
+                    email: curUser.email,
+                    password: curUser.password,
+                    userData: curUser.userData
+                })
+            }
+        });
     }catch(e){
         res.status(500).json({message: e.message})
     }

@@ -19,7 +19,8 @@ const schema = new Schema({
         required: true
     },
     image:{
-        type: String
+        type: String,
+        required: false
     },
     pin:{
         type: String,
@@ -32,15 +33,8 @@ const schema = new Schema({
         required: true
     },
     about:{
-        type: String
-    },
-    deleted:{
-        type: Boolean,
-        default: false
-    },
-    confirmed:{
-        type: Boolean,
-        default: true
+        type: String,
+        required: false
     }
 });
 
