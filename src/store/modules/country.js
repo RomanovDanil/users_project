@@ -1,38 +1,30 @@
-import CountryService from '@/services/country_service';
+import CountryService from "@/services/country_service";
 
 export default {
-    actions:{
-        getCountries: async (context) => {
-            return await CountryService.get().then(
-                data => {
-                    console.log(data)
-                    context.commit('SET_COUNTRIES', data.countries);
-                    context.commit('SET_DEFAULT_COUNTRY');
-                },
-                error => {
-                    console.log(error)
-                }
-            );
-        }
-    },
-    mutations:{
-        SET_COUNTRIES: (state, countries) => {
-            state.countries = countries
+  actions: {
+    getCountries: async (context) => {
+      return await CountryService.get().then(
+        (data) => {
+          console.log(data);
+          context.commit("SET_COUNTRIES", data.countries);
         },
-        SET_DEFAULT_COUNTRY: (state) => {
-            state.country = state.countries[0]
+        (error) => {
+          console.log(error);
         }
+      );
     },
-    state:{
-        countries: [],
-        country:{}
+  },
+  mutations: {
+    SET_COUNTRIES: (state, countries) => {
+      state.countries = countries;
     },
-    getters:{
-        countries: state => {
-            return state.countries
-        },
-        country: state => {
-            return state.country
-        }
-    }
-}
+  },
+  state: {
+    countries: [],
+  },
+  getters: {
+    countries: (state) => {
+      return state.countries;
+    },
+  },
+};

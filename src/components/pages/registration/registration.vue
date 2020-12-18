@@ -1,200 +1,239 @@
 <template>
-<v-app>
+  <v-app>
     <v-container class="fill-height" fluid>
-        <v-row align="center" justify="center">
-            <v-col cols="12" sm="8" md="4">
-                <v-card class="elevation-12">
-                    <v-toolbar color="primary" dark flat>
-                        <v-toolbar-title>Registrate</v-toolbar-title>
-                        <v-spacer></v-spacer>
-                    </v-toolbar>
-                                    
-                    <v-card-text>
-                        <v-form v-model="isValid" :disabled="!expectAnswer">
-                            <v-text-field label="Email"
-                                        v-model="email"
-                                        prepend-icon="alternate_email"
-                                        :rules="email_rules"
-                                        required
-                                        color="light-blue lighten-1">
-                            </v-text-field>
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="12" md="8">
+          <v-card class="elevation-12">
+            <v-toolbar color="primary" dark flat>
+              <v-toolbar-title>Registrate</v-toolbar-title>
+              <v-spacer></v-spacer>
+            </v-toolbar>
 
-                            <v-text-field label="Password"
-                                v-model="password"
-                                prepend-icon="lock"
-                                :rules="password_rules"
-                                :append-icon="registratePasswordVisible ? 'visibility' : 'visibility_off'"
-                                @click:append="() => (registratePasswordVisible = !registratePasswordVisible)"
-                                :type="registratePasswordVisible ? 'text' : 'password'"
-                                color="light-blue lighten-1"
-                                required>
-                            </v-text-field>
+            <v-card-text>
+              <v-form v-model="isValid" :disabled="!expectAnswer">
+                <v-text-field
+                  label="Email"
+                  v-model="email"
+                  prepend-icon="alternate_email"
+                  :rules="email_rules"
+                  required
+                  color="light-blue lighten-1"
+                >
+                </v-text-field>
 
-                            <v-text-field label="Repeat password"
-                                v-model="repeatPassword"
-                                prepend-icon="lock"
-                                :rules="[repeat_password_rules.required, passwordConfirmationRule]"
-                                :append-icon="registratePasswordRepeatVisible ? 'visibility' : 'visibility_off'"
-                                @click:append="() => (registratePasswordRepeatVisible = !registratePasswordRepeatVisible)"
-                                :type="registratePasswordRepeatVisible ? 'text' : 'password'"
-                                color="light-blue lighten-1"
-                                required>
-                            </v-text-field>
+                <v-text-field
+                  label="Password"
+                  v-model="password"
+                  prepend-icon="lock"
+                  :rules="password_rules"
+                  :append-icon="
+                    registratePasswordVisible ? 'visibility' : 'visibility_off'
+                  "
+                  @click:append="
+                    () =>
+                      (registratePasswordVisible = !registratePasswordVisible)
+                  "
+                  :type="registratePasswordVisible ? 'text' : 'password'"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-text-field>
 
-                            <v-text-field label="First name"
-                                        v-model="firstName"
-                                        prepend-icon="account_box"
-                                        :rules="[v => !!v || 'First name is required']"
-                                        color="light-blue lighten-1"
-                                        required>
-                            </v-text-field>
+                <v-text-field
+                  label="Repeat password"
+                  v-model="repeatPassword"
+                  prepend-icon="lock"
+                  :rules="[
+                    repeat_password_rules.required,
+                    passwordConfirmationRule,
+                  ]"
+                  :append-icon="
+                    registratePasswordRepeatVisible
+                      ? 'visibility'
+                      : 'visibility_off'
+                  "
+                  @click:append="
+                    () =>
+                      (registratePasswordRepeatVisible = !registratePasswordRepeatVisible)
+                  "
+                  :type="registratePasswordRepeatVisible ? 'text' : 'password'"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-text-field>
 
-                            <v-text-field label="Second name"
-                                        v-model="secondName"
-                                        prepend-icon="account_box"
-                                        :rules="[v => !!v || 'Second name is required']"
-                                        color="light-blue lighten-1"
-                                        required>
-                            </v-text-field>
+                <v-text-field
+                  label="First name"
+                  v-model="firstName"
+                  prepend-icon="account_box"
+                  :rules="[(v) => !!v || 'First name is required']"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-text-field>
 
-                            <v-text-field label="Third name"
-                                        v-model="thirdName"
-                                        prepend-icon="account_box"
-                                        :rules="[v => !!v || 'Third name is required']"
-                                        color="light-blue lighten-1"
-                                        required>
-                            </v-text-field>
+                <v-text-field
+                  label="Second name"
+                  v-model="secondName"
+                  prepend-icon="account_box"
+                  :rules="[(v) => !!v || 'Second name is required']"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-text-field>
 
-                            <v-select label="Country"
-                                        v-model="country"
-                                        :hint="`${country.name}, ${country.abbreviatedName}`"
-                                        :items=countries
-                                        item-text="name"
-                                        item-value="_id"
-                                        return-object
-                                        prepend-icon="map"
-                                        :rules="[v => !!v || 'Country is required']"
-                                        color="light-blue lighten-1"
-                                        required>   
-                            </v-select>
+                <v-text-field
+                  label="Third name"
+                  v-model="thirdName"
+                  prepend-icon="account_box"
+                  :rules="[(v) => !!v || 'Third name is required']"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-text-field>
 
-                            <v-file-input
-                                        v-model="image"
-                                        :rules="image_rules"
-                                        accept="image/png, image/jpeg, image/bmp"
-                                        placeholder="Pick an avatar"
-                                        prepend-icon="camera_alt"
-                                        label="Avatar"
-                                        >
-                            </v-file-input>
+                <v-select
+                  label="Country"
+                  v-model="country"
+                  :hint="`${country.name}, ${country.abbreviatedName}`"
+                  :items="countries"
+                  item-text="name"
+                  item-value="_id"
+                  return-object
+                  prepend-icon="map"
+                  :rules="[(v) => !!v || 'Country is required']"
+                  color="light-blue lighten-1"
+                  required
+                >
+                </v-select>
 
-                            <v-btn color="light-blue lighten-1" @click.native="submitRegistrate()" :disabled="!isValid" :loading="loading">Sign up</v-btn>
-                        </v-form>
-                    </v-card-text>
+                <v-file-input
+                  v-model="image"
+                  :rules="image_rules"
+                  accept="image/png, image/jpeg, image/bmp"
+                  placeholder="Pick an avatar"
+                  prepend-icon="camera_alt"
+                  label="Avatar"
+                >
+                </v-file-input>
 
-                    <v-col cols="12">
-                        <div class="text-body text-center">
-                            <router-link :to="'/login'">Sign In</router-link>
-                        </div>
-                    </v-col>
-                </v-card>
-        
-                <v-snackbar timeout="6000"
-                            bottom="bottom"
-                            color="red lighten-1"
-                            v-model="snackbar">
-                {{ message }}
-                </v-snackbar>
-    
+                <v-btn
+                  color="light-blue lighten-1"
+                  @click.native="submitRegistrate()"
+                  :disabled="!isValid"
+                  :loading="loading"
+                  >Sign up</v-btn
+                >
+              </v-form>
+            </v-card-text>
+
+            <v-col cols="12">
+              <div class="text-body text-center">
+                <router-link :to="'/login'">Sign In</router-link>
+              </div>
             </v-col>
-        </v-row>
+          </v-card>
+
+          <v-snackbar
+            timeout="6000"
+            bottom="bottom"
+            color="red lighten-1"
+            v-model="snackbar"
+          >
+            {{ message }}
+          </v-snackbar>
+        </v-col>
+      </v-row>
     </v-container>
-</v-app>
+  </v-app>
 </template>
 
 <script>
-    //импорт функциональных опций
-    import authService from '@/services/auth_service';
-    import User from '@/models/user'
-    import router from '@/router'
-    import {mapGetters, mapActions} from "vuex";
+//импорт функциональных опций
+import authService from "@/services/auth_service";
+import User from "@/models/user";
+import router from "@/router";
+import { mapGetters, mapActions } from "vuex";
 
-    export default {
-        name: "Registration",
-        computed: {
-            ...mapGetters(['countries','country']),
-            passwordConfirmationRule: function() {
-                return () => (this.password === this.repeatPassword) || 'Passwords must match'
-            },
-            loggedIn(){
-                return this.$store.state.auth.status.loggedIn;
-            }
-        },
-        created() {
-            if (this.loggedIn) {
-                this.$router.push('/profile');
-            }
-            this.getCountries();
-        },
-        data: () => ({
-            snackbar: false,
-            isValid: true,
-            loading: false,
-            registratePasswordVisible: false,
-            registratePasswordRepeatVisible: false,
-            email: '',
-            password: '',
-            repeatPassword: '',
-            firstName: '',
-            secondName: '',
-            thirdName: '',
-            message: '',
-            image:{},
-            password_rules: [ 
-                (v) => !!v || 'Password is required', 
-                (v) => (v && v.length >= 5) || 'Password must have 5+ characters',
-                (v) => /(?=.*[A-Z])/.test(v) || 'Must have one uppercase character', 
-                (v) => /(?=.*\d)/.test(v) || 'Must have one number', 
-                (v) => /([!@$%])/.test(v) || 'Must have one special character [!@#$%]' 
-            ],
-            email_rules: [
-                (v) => !!v || 'Email is required', 
-                (v) => /.+@.+/.test(v) || 'E-mail must be valid' 
-            ],
-            image_rules: [
-                 value => !value || value.size < 2000000 || 'Avatar size should be less than 2 MB!',
-    ]       ,
-            repeat_password_rules: {
-                required: v => !!v || 'Password is required'
-            }
-        }),
-        methods: {
-            ...mapActions(['getCountries']),
-            async submitRegistrate () {
-                this.loading = true
-                await this.$store.dispatch(
-                    'auth/registrate', 
-                    {
-                        email: this.email,
-                        password: this.password, 
-                        repeatPassword: this.repeatPassword,
-                        firstName: this.firstName,
-                        secondName: this.secondName,
-                        thirdName: this.thirdName,
-                        country: this.country._id,
-                        image: this.image
-                    }
-                )
-                .then(data => {
-                    this.$router.push('/login')
-                })
-                .catch(data => {
-                    console.log(data)
-                    this.message = data.message
-                    this.snackbar = true;
-                });
-                this.loading = false;
-            }
-        }
+export default {
+  name: "Registration",
+  computed: {
+    ...mapGetters(["countries"]),
+    passwordConfirmationRule: function() {
+      return () =>
+        this.password === this.repeatPassword || "Passwords must match";
+    },
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
+  created() {
+    if (this.loggedIn) {
+      this.$router.push("/profile");
     }
+    this.getCountries();
+  },
+  data: () => ({
+    snackbar: false,
+    isValid: true,
+    loading: false,
+    registratePasswordVisible: false,
+    registratePasswordRepeatVisible: false,
+    email: "",
+    password: "",
+    repeatPassword: "",
+    firstName: "",
+    secondName: "",
+    thirdName: "",
+    message: "",
+    country: {},
+    image: {},
+    password_rules: [
+      (v) => !!v || "Password is required",
+      (v) => (v && v.length >= 5) || "Password must have 5+ characters",
+      (v) => /(?=.*[A-Z])/.test(v) || "Must have one uppercase character",
+      (v) => /(?=.*\d)/.test(v) || "Must have one number",
+      (v) => /([!@$%])/.test(v) || "Must have one special character [!@#$%]",
+    ],
+    email_rules: [
+      (v) => !!v || "Email is required",
+      (v) => /.+@.+/.test(v) || "E-mail must be valid",
+    ],
+    image_rules: [
+      (value) =>
+        !value ||
+        value.size < 2000000 ||
+        "Avatar size should be less than 2 MB!",
+    ],
+    repeat_password_rules: {
+      required: (v) => !!v || "Password is required",
+    },
+  }),
+  methods: {
+    ...mapActions(["getCountries"]),
+    async submitRegistrate() {
+      this.loading = true;
+      await this.$store
+        .dispatch("auth/registrate", {
+          email: this.email,
+          password: this.password,
+          repeatPassword: this.repeatPassword,
+          firstName: this.firstName,
+          secondName: this.secondName,
+          thirdName: this.thirdName,
+          country: this.country._id,
+          image: this.image,
+        })
+        .then((data) => {
+          this.$router.push("/login");
+        })
+        .catch((data) => {
+          console.log(data);
+          this.message = data.message;
+          this.snackbar = true;
+        });
+      this.loading = false;
+    },
+  },
+};
 </script>
