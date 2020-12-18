@@ -35,6 +35,8 @@ server.use("/api/auth", require('./routes/auth_routes'));
 server.use("/api/user", require('./routes/user_routes'));
 server.use("/api/country", require('./routes/country_routes'));
 server.use("/api/role", require('./routes/role_routes'));  
+server.use(express.static('uploads'));
+
 
 //подключение к mongodb и запуск сервера
 async function start() {
