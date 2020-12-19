@@ -160,14 +160,14 @@ router.post(
       const { email, password } = req.body;
 
       //поиск пользователя в базе
-      const curUser = await await User.findOne({
+      const curUser = await User.findOne({
         email: email,
         confirmed: true,
         deleted: false,
       }).populate({
         path: "userData",
         populate: {
-          path: "country",
+          path: "country role",
         },
       });
 
@@ -191,7 +191,6 @@ router.post(
             token,
             id: curUser._id,
             email: curUser.email,
-            password: curUser.password,
             userData: curUser.userData,
           });
         }

@@ -36,6 +36,7 @@ const schema = new Schema({
   about: {
     type: String,
     required: false,
+    default: "",
   },
 });
 

@@ -6,9 +6,27 @@ const multer = require("multer");
 const path = require("path");
 const validator = require("validator");
 const { check, validationResult } = require("express-validator");
-const Country = require("../models/Country");
+const jwt = require("jsonwebtoken");
+const config = require("config");
 
 const router = Router();
+
+//аутентификация токена
+const authenticateJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(" ")[1];
+    jwt.verify(token, config.get("jwtSecretKey"), (err, user) => {
+      if (err) {
+        return res.sendStatus(403);
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    res.sendStatus(401);
+  }
+};
 
 //инициализация хранилища изображений
 var storage = multer.diskStorage({
@@ -42,12 +60,20 @@ const upload = multer({
 // /api/user/getById
 router.get("/getById", async (req, res) => {
   try {
-    const { _id } = req.body;
-    const curUser = await User.findById({ _id }, { confirmed: true }).populate(
-      "userData"
-    );
-    if (curUser) {
-      return res.json({ message: curUser });
+    const { _id } = req.query;
+    const currentUser = await User.findOne({
+      _id: _id,
+      confirmed: true,
+      deleted: false,
+    }).populate({
+      path: "userData",
+      populate: {
+        path: "country role",
+      },
+    });
+
+    if (currentUser) {
+      return res.json({ user: currentUser });
     } else {
       return res.status(400).json({ message: "User is not exists" });
     }
@@ -56,29 +82,48 @@ router.get("/getById", async (req, res) => {
   }
 });
 
-// /api/user/changePassword
-router.get("/changePassword", async (req, res) => {
+// /api/user/updatePassword
+router.put("/updatePassword", authenticateJWT, async (req, res) => {
   try {
-    const { _id, password, newPassword, newPasswordRepeat } = req.body;
-    const curUser = await User.findById({ _id });
-    if (!curUser) {
+    const { _id, currentPassword, newPassword, repeat_newPassword } = req.body;
+    const currentUser = await User.findOne({
+      _id,
+      deleted: false,
+      confirmed: true,
+    });
+    if (!currentUser) {
       return res.status(400).json({ message: "User is not exists" });
     }
 
-    if (curUser.password !== bcrypt.hash(password, 15)) {
-      return res.status(400).json({ message: "Invalid password entered" });
+    if (newPassword !== repeat_newPassword) {
+      return res
+        .status(400)
+        .json({ message: "New passwords don't match", status: false });
     }
 
-    if (newPassword !== newPasswordRepeat) {
-      return res.status(400).json({ message: "New passwords don't match" });
+    const isMatch = await bcrypt.compare(currentPassword, currentUser.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ message: "Password entered incorrectly", status: false });
     }
 
-    newPasswordHash = bcrypt.hash(newPassword);
-    curUser.password = newPasswordHash;
-    curUser.save();
-    res.status.json({ message: "The password change is successful" });
+    newPasswordHash = await bcrypt.hash(newPassword, 15);
+
+    const user = await User.findOneAndUpdate(
+      { _id, deleted: false, confirmed: true },
+      { password: newPasswordHash }
+    );
+    if (user) {
+      return res.json({
+        message: "The password change is successful",
+        status: true,
+      });
+    } else {
+      return res.status(400).json("User not found");
+    }
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    return res.status(500).json({ message: e.message, status: false });
   }
 });
 
@@ -86,12 +131,18 @@ router.get("/changePassword", async (req, res) => {
 router.get("/get", async (req, res) => {
   try {
     const users = await User.find({ confirmed: true, deleted: false }).populate(
-      "userData"
+      {
+        path: "userData",
+        populate: {
+          path: "country role",
+        },
+      }
     );
+
     if (users) {
-      return res.json({ message: users });
+      return res.json({ users });
     } else {
-      return res.status(400).json({ message: "Users are not exists" });
+      return res.status(400).json({ message: "Users not found" });
     }
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -99,45 +150,41 @@ router.get("/get", async (req, res) => {
 });
 
 // /api/user/update
-router.put("/update", async (req, res) => {
+router.put("/updateUserData", authenticateJWT, async (req, res) => {
   try {
-    const { _id, newData } = req.body;
+    const { userDataId, newUserData } = req.body;
 
-    errors = array();
-    correctNewData = {};
-    for (property in newData) {
-      value = req.body[property];
-      if (validator.isEmpty(value)) {
-        array.push({ prop: property, val: value, message: "Value is empty" });
-      } else {
-        correctNewData[property] = value;
+    errors = [];
+    for (key in newUserData) {
+      if (newUserData[key] == null || newUserData[key] == "") {
+        errors.push({ property: key, message: "Value is empty" });
       }
     }
 
-    const user = await User.findById({ _id });
-    if (!user) {
-      return res.status(400).json({ message: "User is not exists" });
+    if (errors.lenght > 0) {
+      return res
+        .status(400)
+        .json({ errors: errors, message: "Incorrect user's data" });
     }
 
-    userData = UserData.findOneAndUpdate(
-      { _id: user.userData },
-      correctUserData
-    );
-    if (userData) {
-      return res.status.json({
-        message: "Data was successfully updated",
-        postUserData: userData,
-      });
-    } else {
-      return res.status(400).json({ message: "Users data is not exists" });
+    const userData = await UserData.findByIdAndUpdate(userDataId, newUserData, {
+      new: true,
+    }).populate("country role");
+
+    if (!userData) {
+      return res
+        .status(400)
+        .json({ errors: errors, message: "User's data not found" });
     }
+
+    return res.json({ userData });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
 });
 
-router.put("/uploadImage", async (req, res) => {
-  const { _id } = req.body;
+router.put("/uploadImage", authenticateJWT, async (req, res) => {
+  const { userDataId } = req.body;
 
   await upload(req, res, (err) => {
     errorMessage = "";
@@ -159,8 +206,8 @@ router.put("/uploadImage", async (req, res) => {
   if (req.file) {
     imagePath = req.file.path;
 
-    userData = UserData.findOneAndUpdate(
-      { _id },
+    userData = UserData.findByIdAndUpdate(
+      userDataId,
       { image: imagePath },
       { new: true }
     );
@@ -168,7 +215,7 @@ router.put("/uploadImage", async (req, res) => {
     if (userData) {
       return res.status.json({
         message: "Data was successfully updated",
-        postUserData: userData,
+        userData,
       });
     } else {
       return res.status(400).json({ message: "Users data is not exists" });
@@ -178,7 +225,26 @@ router.put("/uploadImage", async (req, res) => {
   }
 });
 
-router.delete("/delete", async (req, res) => {
+// /api/user/deleteImage
+router.put("/deleteImage", authenticateJWT, async (req, res) => {
+  try {
+    const { userDataId } = req.body;
+    userData = await UserData.findByIdAndUpdate(
+      userDataId,
+      { image: "default" },
+      { new: true }
+    );
+    if (userData) {
+      return res.json({ userData });
+    } else {
+      return res.status(400).json({ message: "User's data not found" });
+    }
+  } catch (e) {
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+router.delete("/delete", authenticateJWT, async (req, res) => {
   try {
     const { _id } = req.body;
     const user = await User.findOneAndUpdate({ _id }, { deleted: true });

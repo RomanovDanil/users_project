@@ -13,4 +13,4 @@ const schema = new Schema({
   },
 });
 
-module.exports = model("UsersEvent", schema);
+module.exports = model("UserEvent", schema);
