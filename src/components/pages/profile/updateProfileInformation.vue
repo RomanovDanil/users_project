@@ -58,6 +58,15 @@
                   >
                   </v-select>
 
+                  <v-text-field
+                    label="About"
+                    v-model="currentUser.userData.about"
+                    prepend-icon="account_box"
+                    :rules="[(v) => !!v || 'Description is required']"
+                    color="light-blue lighten-1"
+                    required
+                  >
+                  </v-text-field>
                   <v-btn
                     color="light-blue lighten-2"
                     @click.native="ChangeProfileInformation()"

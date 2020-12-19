@@ -5,8 +5,8 @@ import Registration from "@/components/pages/registration/registration";
 import Login from "@/components/pages/login/login";
 import Profile from "@/components/pages/profile/profile";
 import Event from "@/components/pages/event/event";
-import ChangeProfileInformation from "@/components/pages/profile/changeProfileInformation";
-import ChangePassword from "@/components/pages/profile/changePassword";
+import UpdateProfileInformation from "@/components/pages/profile/updateProfileInformation";
+import UpdatePassword from "@/components/pages/profile/updatePassword";
 import SetPin from "@/components/pages/profile/setPin";
 
 Vue.use(VueRouter);
@@ -36,14 +36,14 @@ const router = new VueRouter({
       component: Event,
     },
     {
-      path: "/profile/changeProfileInformation",
-      name: "ChangeProfileInformation",
-      component: ChangeProfileInformation,
+      path: "/profile/updateProfileInformation",
+      name: "UpdateProfileInformation",
+      component: UpdateProfileInformation,
     },
     {
-      path: "/profile/changePassword",
-      name: "ChangePassword",
-      component: ChangePassword,
+      path: "/profile/updatePassword",
+      name: "UpdatePassword",
+      component: UpdatePassword,
     },
     {
       path: "/profile/setPin",

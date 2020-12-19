@@ -38,6 +38,13 @@
                       >delete</v-btn
                     ></v-col
                   >
+                  <input
+                    type="file"
+                    id="file"
+                    ref="file"
+                    accept="image/jpeg, image/gif, image/png"
+                    v-on:change="handleUploadImage()"
+                  />
                 </v-row>
               </v-col>
               <v-col cols="7" class="text-left">
@@ -138,14 +145,39 @@ export default {
       this.$router.push("/login");
     },
     changeProfileInformation() {
-      this.$router.push("/profile/changeProfileInformation");
+      this.$router.push("/profile/updateProfileInformation");
     },
     changePassword() {
-      this.$router.push("/profile/changePassword");
+      this.$router.push("/profile/updatePassword");
     },
     setPin() {
       this.$router.push("/profile/setPin");
     },
+    uploadImage() {
+      this.$refs.files.click();
+    },
+    deleteImage() {
+      this.$store
+        .dispatch("user/deleteImage", this.currentUser)
+        .then()
+        .catch();
+    },
+    handleUploadImage() {
+      file = this.$refs.file.files[0];
+      let formData = new FormData();
+      formData.append("file", file);
+
+      this.$store
+        .dispatch("user/uploadImage", this.currentUser, formData)
+        .then()
+        .catch();
+    },
   },
 };
 </script>
+
+<style>
+input[type="file"] {
+  display: none;
+}
+</style>

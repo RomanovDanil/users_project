@@ -1,59 +1,69 @@
 import axios from "axios";
-import authHeader from "./auth_header";
-
-const UsersAPI = `http://${window.location.hostname}:5000`;
-
+const UsersAPI = `http://localhost:5000/api`;
 class UserService {
-  getPublicContent() {
-    return axios.get(UsersAPI + "/all");
-  }
-
-  getUserBoard() {
-    return axios.get(UsersAPI + "/user", { headers: authHeader() });
-  }
-
-  getModeratorBoard() {
-    return axios.get(UsersAPI + "/mod", { headers: authHeader() });
-  }
-
-  getAdminBoard() {
-    return axios.get(UsersAPI + "/admin", { headers: authHeader() });
-  }
-
-  setPIN(PIN) {
+  setPIN(user, PIN) {
     return axios.post(UsersAPI + "/user/setPIN", {
-      headers: authHeader(),
-      PIN: PIN,
+      headers: { Authorization: "Bearer " + user.token },
+      PIN,
+      _id,
     });
   }
 
-  updateUserData(userData) {
-    return axios.post(UsersAPI + "/user/updateUserData", {
-      headers: authHeader(),
-      userData,
-    });
+  updateUserData(user) {
+    return axios
+      .post(UsersAPI + "/user/updateUserData", {
+        headers: { Authorization: "Bearer " + user.token },
+        newUserData: user.userData,
+        userDataId: user.userData._id,
+      })
+      .then((response) => {
+        user.userData = response.data.userData;
+        localStorage.setItem("user", JSON.stringify(user));
+        return Promise.resolve(response.data);
+      })
+      .catch(({ response: { data } }) => {
+        return Promise.reject(data);
+      });
   }
 
-  uploadImage(image) {
-    return axios.post(UsersAPI + "/user/uploadImage", {
-      headers: authHeader(),
-      image,
-    });
+  uploadImage(user, data) {
+    return axios
+      .post(UsersAPI + "/user/uploadImage", {
+        headers: {
+          Authorization: "Bearer " + user.token,
+          "Content-Type": "multipart/form-data",
+        },
+        data,
+        userDataId: user.userData.id,
+      })
+      .then((response) => {
+        user.userData.image = response.data.imagePath;
+        localStorage.setItem("user", JSON.stringify(user));
+        return Promise.resolve(response.data);
+      })
+      .catch(({ response: { data } }) => {
+        return Promise.reject(data);
+      });
   }
 
-  deleteImage() {
+  deleteImage(_id) {
     return axios.post(UsersAPI + "/user/deleteImage", {
-      headers: authHeader(),
+      headers: { Authorization: "Bearer " + user.token },
+      _id,
     });
   }
 
-  updatePassword(currentPassword, newPassword, repeat_newPassword) {
-    return axios.post(UsersAPI + "/user/updatePassword", {
-      headers: authHeader(),
-      currentPassword,
-      newPassword,
-      repeat_newPassword,
-    });
+  updatePassword(user, currentPassword, newPassword, repeat_newPassword) {
+    return axios.put(
+      UsersAPI + "/user/updatePassword",
+      {
+        currentPassword,
+        newPassword,
+        repeat_newPassword,
+        _id: user.id,
+      },
+      { headers: { Authorization: "Bearer " + user.token } }
+    );
   }
 }
 

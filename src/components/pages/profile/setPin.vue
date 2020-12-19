@@ -70,7 +70,16 @@ export default {
     console.log(this.currentUser);
   },
   methods: {
-    setPIN(newPIN) {},
+    setPIN(newPIN) {
+      this.loading = true;
+      this.$store
+        .dispatch("user/setPIN", {
+          userId: this.currentUser._id,
+          pin: this.newPIN,
+        })
+        .then()
+        .catch();
+    },
   },
 };
 </script>

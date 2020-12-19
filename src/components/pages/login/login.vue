@@ -115,7 +115,7 @@ export default {
           password: this.password,
         })
         .then((data) => {
-          this.$router.push("/profile");
+          this.$router.push("/");
         })
         .catch((data) => {
           this.message = data.message;
