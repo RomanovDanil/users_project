@@ -110,18 +110,13 @@ router.put("/updatePassword", authenticateJWT, async (req, res) => {
 
     newPasswordHash = await bcrypt.hash(newPassword, 15);
 
-    const user = await User.findOneAndUpdate(
-      { _id, deleted: false, confirmed: true },
-      { password: newPasswordHash }
-    );
-    if (user) {
-      return res.json({
-        message: "The password change is successful",
-        status: true,
-      });
-    } else {
-      return res.status(400).json("User not found");
-    }
+    currentUser.password = newPasswordHash;
+    await currentUser.save();
+
+    return res.json({
+      message: "The password change is successful",
+      status: true,
+    });
   } catch (e) {
     return res.status(500).json({ message: e.message, status: false });
   }
