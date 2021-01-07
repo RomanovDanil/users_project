@@ -1,21 +1,15 @@
 <template>
   <v-app>
-    <v-container fluid class="pa-0 ma-0">
-      <v-row class="ma-0 pa-0">
-        <v-col cols="12" sm="12" md="12" class="ma-0 pa-0">
+    <v-container fluid>
+      <v-row class="ma-0 pa-0" justify="center">
+        <v-col cols="12" sm="12" md="5">
           <v-card>
-            <v-toolbar color="primary" dark flat>
-              <v-toolbar-title
-                >Set personal identification number</v-toolbar-title
-              >
-              <v-spacer></v-spacer>
-            </v-toolbar>
             <v-row class="mx-0" justify="center">
               <v-col cols="12" class="text-left">
                 <v-form v-model="isValid" align="center">
                   <v-text-field
                     label="PIN"
-                    v-model="newPIN"
+                    v-model="pin"
                     prepend-icon="lock"
                     :rules="pin_rules"
                     :type="'password'"
@@ -37,6 +31,15 @@
               </v-col>
             </v-row>
           </v-card>
+
+          <v-snackbar
+            timeout="6000"
+            bottom="bottom"
+            :color="color"
+            v-model="snackbar"
+          >
+            {{ message }}
+          </v-snackbar>
         </v-col>
       </v-row>
     </v-container>
@@ -52,11 +55,20 @@ export default {
       return this.$store.state.auth.user;
     },
   },
+  created() {
+    this.$store.dispatch(
+      "pages/setPageName",
+      "Set personal identification number"
+    );
+  },
   data: () => ({
     selectedItem: 0,
     isValid: true,
     loading: false,
-    newPIN: "",
+    message: "",
+    color: "",
+    snackbar: false,
+    pin: "",
     pin_rules: [
       (v) => !!v || "PIN is required",
       (v) => (v && v.length == 4) || "PIN must have 4 numbers",
@@ -70,15 +82,29 @@ export default {
     console.log(this.currentUser);
   },
   methods: {
-    setPIN(newPIN) {
+    async setPIN() {
       this.loading = true;
-      this.$store
+      await this.$store
         .dispatch("user/setPIN", {
-          userId: this.currentUser._id,
-          pin: this.newPIN,
+          user: this.currentUser,
+          pin: this.pin,
         })
-        .then()
-        .catch();
+        .then(() => {
+          this.message = "PIN has been updated";
+          this.color = "success";
+          this.snackbar = true;
+        })
+        .catch((error) => {
+          console.log(error);
+          if (error.response.data.message) {
+            this.message = error.response.data.message;
+          } else {
+            this.message = error.message;
+          }
+          this.color = "red lighten-1";
+          this.snackbar = true;
+        });
+      this.loading = false;
     },
   },
 };

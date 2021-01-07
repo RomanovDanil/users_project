@@ -1,23 +1,15 @@
 <template>
-  <v-app>
-    <v-container fluid>
-      <v-row justify="center">
-        <v-col cols="2" md="2" sm="12">
-          <UserCard v-bind:currentUser="currentUser" />
-        </v-col>
-        <v-col cols="6" md="6" sm="12">
-          <v-main>
-            <router-view />
-          </v-main>
-        </v-col>
-        <v-col cols="2" md="2" sm="12"> </v-col>
-      </v-row>
-    </v-container>
+  <v-app class="grey lighten-4">
+    <NavBar v-bind:currentUser="currentUser" />
+    <v-main>
+      <router-view />
+    </v-main>
   </v-app>
 </template>
 
 <script>
-import UserCard from "@/components/menu/user_card";
+import NavBar from "@/components/NavBar";
+
 export default {
   name: "app",
   computed: {
@@ -26,7 +18,7 @@ export default {
     },
   },
   components: {
-    UserCard,
+    NavBar,
   },
 };
 </script>

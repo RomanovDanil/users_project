@@ -2,7 +2,7 @@
   <v-app>
     <v-container class="fill-height" fluid>
       <v-row align="center" justify="center">
-        <v-col cols="12" sm="12" md="8">
+        <v-col cols="12" sm="12" md="4">
           <v-card class="elevation-12">
             <v-toolbar color="primary" dark flat>
               <v-toolbar-title>Login</v-toolbar-title>
@@ -52,19 +52,21 @@
 
             <v-col cols="12">
               <div class="text-body text-center">
-                <router-link :to="'/registration'">Регистрация</router-link>
+                <router-link :to="'/registration'">Sign Up</router-link>
               </div>
             </v-col>
           </v-card>
 
-          <v-snackbar
-            timeout="6000"
-            bottom="bottom"
-            color="red lighten-1"
-            v-model="snackbar"
-          >
-            {{ message }}
-          </v-snackbar>
+          <template>
+            <v-snackbar
+              timeout="6000"
+              bottom="bottom"
+              color="red lighten-1"
+              v-model="snackbar"
+            >
+              {{ message }}
+            </v-snackbar>
+          </template>
         </v-col>
       </v-row>
     </v-container>
@@ -91,13 +93,7 @@ export default {
     isValid: true,
     loading: false,
     registratePasswordVisible: false,
-    password_rules: [
-      (v) => !!v || "Password is required",
-      (v) => (v && v.length >= 5) || "Password must have 5+ characters",
-      (v) => /(?=.*[A-Z])/.test(v) || "Must have one uppercase character",
-      (v) => /(?=.*\d)/.test(v) || "Must have one number",
-      (v) => /([!@$%])/.test(v) || "Must have one special character [!@#$%]",
-    ],
+    password_rules: [(v) => !!v || "Password is required"],
     email_rules: [
       (v) => !!v || "Email is required",
       (v) => /.+@.+/.test(v) || "E-mail must be valid",
@@ -117,8 +113,22 @@ export default {
         .then((data) => {
           this.$router.push("/");
         })
-        .catch((data) => {
-          this.message = data.message;
+        .catch((error) => {
+          let errorMessage = "";
+          if (error.response) {
+            errorMessage = error.response.data.message;
+            if (error.response.data.errors) {
+              errorMessage += ": ";
+              const errors = error.response.data.errors;
+              for (let i = 0; i < errors.length; i++) {
+                errorMessage += errors[i].msg + "; ";
+              }
+            }
+          } else {
+            if (error.message) errorMessage = error.message;
+            else errorMessage = error;
+          }
+          this.message = errorMessage;
           this.snackbar = true;
         });
       this.loading = false;
@@ -126,42 +136,3 @@ export default {
   },
 };
 </script>
-
-<style>
-.custom-loader {
-  animation: loader 1s infinite;
-  display: flex;
-}
-@-moz-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-@-webkit-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-@-o-keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes loader {
-  from {
-    transform: rotate(0);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>

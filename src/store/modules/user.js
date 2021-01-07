@@ -6,16 +6,15 @@ export default {
   namespaced: true,
   state: user,
   actions: {
-    setPIN: async (context, user, pin) => {
-      return await UserService.setPIN(user, pin)
-        .then((data) => {
+    setPIN: async (context, payload) => {
+      return await UserService.setPIN(payload.user, payload.pin).then(
+        () => {
           return Promise.resolve({ status: true, message: "success" });
-        })
-        .catch((data) => {
-          console.log(data);
-          context.commit("PINSettedFailure");
-          return Promise.reject(data);
-        });
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
     },
 
     updatePassword: async (context, payload) => {
@@ -23,47 +22,89 @@ export default {
         payload.user,
         payload.currentPassword,
         payload.newPassword,
-        payload.repeat_newPassword
-      )
-        .then(() => {
+        payload.newPasswordConfirmation
+      ).then(
+        () => {
           return Promise.resolve({ status: true, message: "success" });
-        })
-        .catch(({ response: { data } }) => {
-          return Promise.reject(data);
-        });
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
     },
 
-    updateUserData: async (context, user, newUserData) => {
-      return await UserService.updateUserData(user, newUserData)
-        .then((data) => {
+    updateUserData: async (context, payload) => {
+      return await UserService.updateUserData(
+        payload.currentUser,
+        payload.firstName,
+        payload.secondName,
+        payload.thirdName,
+        payload.countryId,
+        payload.about
+      ).then(
+        () => {
           return Promise.resolve({ status: true, message: "success" });
-        })
-        .catch((data) => {
-          console.log(data);
-          return Promise.reject(data);
-        });
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
     },
 
-    uploadImage: async (context, user, image) => {
-      return await UserService.uploadImage(user, image)
-        .then((data) => {
+    uploadImage: async (context, payload) => {
+      return await UserService.uploadImage(
+        payload.currentUser,
+        payload.imageBase64
+      ).then(
+        () => {
           return Promise.resolve({ status: true, message: "success" });
-        })
-        .catch((data) => {
-          console.log(data);
+        },
+        (error) => {
+          console.log(error);
           return Promise.reject(data);
-        });
+        }
+      );
     },
 
-    deleteImage: async (context, user) => {
-      return await UserService.deleteImage(user)
-        .then((data) => {
+    deleteImage: async (context, payload) => {
+      return await UserService.deleteImage(payload.user).then(
+        () => {
           return Promise.resolve({ status: true, message: "success" });
-        })
-        .catch((data) => {
-          console.log(data);
-          return Promise.reject(data);
-        });
+        },
+        (error) => {
+          console.log(error);
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    create: async (context, payload) => {
+      return await UserService.create(
+        payload.currentUser,
+        payload.userData
+      ).then(
+        () => {
+          return Promise.resolve({ status: true, message: "success" });
+        },
+        (error) => {
+          console.log(error);
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    getById: async (context, payload) => {
+      return await UserService.getById(
+        payload.currentUser,
+        payload.userId
+      ).then(
+        (response) => {
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
     },
   },
 

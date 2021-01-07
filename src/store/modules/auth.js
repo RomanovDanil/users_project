@@ -1,83 +1,90 @@
-import AuthService from '@/services/auth_service';
+import AuthService from "@/services/auth_service";
 
-const user = JSON.parse(localStorage.getItem('user'));
+const user = JSON.parse(localStorage.getItem("user"));
 const initialState = user
   ? { status: { loggedIn: true }, user }
   : { status: { loggedIn: false }, user: null };
+
+const roles = {
+  // admin: {
+  //   id: "5fc28e769dfae7123fcf8ee6",
+  //   name: "Admin",
+  // },
+  expert: {
+    id: "5fc28e859dfae7123fcf8ee7",
+    name: "Expert",
+  },
+  competitor: {
+    id: "5fc28e9f9dfae7123fcf8ee8",
+    name: "Competitor",
+  },
+};
 
 export const auth = {
   namespaced: true,
   state: initialState,
   actions: {
     login: async (context, user) => {
-      return await AuthService.login(user)
-      // .then(
-      //   user => {
-      //       context.commit('loginSuccess', user);
-      //       return Promise.resolve(user);
-      //   },
-      //   error => {
-      //       context.commit('loginFailure');
-      //       return Promise.reject(error);
-      //   }
-      // )
-      .then(data => {
-            console.log({status:"success", data})
-            context.commit('loginSuccess', data);
-            return Promise.resolve(data);
+      return await AuthService.login(user).then(
+        (user) => {
+          console.log({ status: "success", user });
+          context.commit("loginSuccess", user);
+          return Promise.resolve(user);
+        },
+        (error) => {
+          console.log(error);
+          context.commit("loginFailure");
+          return Promise.reject(error);
         }
-      )
-      .catch(data => {
-            console.log(data)
-            context.commit('loginFailure');
-            return Promise.reject(data);
-        }
-      )
+      );
     },
     logout: (context) => {
-        AuthService.logout();
-        context.commit('logout');
+      AuthService.logout();
+      context.commit("logout");
     },
     registrate: async (context, user) => {
-      return await AuthService.registrate(user)
-      .then(response => {
-            console.log("success")
-            context.commit('registerSuccess');
-            return Promise.resolve(response.data);
+      return await AuthService.registrate(user).then(
+        (response) => {
+          console.log("success");
+          context.commit("registerSuccess");
+          return Promise.resolve({ status: true });
+        },
+        (error) => {
+          console.log(error);
+          context.commit("registerFailure");
+          return Promise.reject(error);
         }
-      )
-      .catch(({response: {data}}) => {
-            console.log(data)
-            context.commit('registerFailure');
-            return Promise.reject(data);
-        }
-      )
-    }
+      );
+    },
   },
 
   mutations: {
     loginSuccess(state, user) {
-        state.status.loggedIn = true;
-        state.user = user;
+      state.status.loggedIn = true;
+      state.user = user;
     },
     loginFailure(state) {
-        state.status.loggedIn = false;
-        state.user = null;
+      state.status.loggedIn = false;
+      state.user = null;
     },
     logout(state) {
-        state.status.loggedIn = false;
-        state.user = null;
+      state.status.loggedIn = false;
+      state.user = null;
     },
     registerSuccess(state) {
-        state.status.loggedIn = false;
+      state.status.loggedIn = false;
     },
     registerFailure(state) {
-        state.status.loggedIn = false;
-    }
+      state.status.loggedIn = false;
+    },
   },
+
   getters: {
-    loggedIn: state => {
-      return state.initialState.status
-    }
-  }
-}
+    loggedIn: (state) => {
+      return state.status.loggedIn;
+    },
+    isAdmin: (state) => {
+      return state.user.isAdmin;
+    },
+  },
+};

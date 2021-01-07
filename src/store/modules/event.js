@@ -4,60 +4,193 @@ export const event = {
   namespaced: true,
   state: { events: null },
   actions: {
-    getCurrentEvent: async (context, user) => {
-      return await EventService.getCurrentEvent(user)
-        .then((data) => {
-          return Promise.resolve(data);
-        })
-        .catch((data) => {
-          return Promise.reject(data);
-        });
+    getUserEvent: async (context, payload) => {
+      return await EventService.getUserEvent(
+        payload.currentUser,
+        payload.userId
+      ).then(
+        (response) => {
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
     },
-    getAllEvents: async (context, user) => {
-      return await EventService.getAllEvents(user)
-        .then((data) => {
-          return Promise.resolve(data);
-        })
-        .catch((data) => {
-          console.log(data);
+
+    getCurrentEvent: async (context, payload) => {
+      return await EventService.getCurrentEvent(
+        payload.currentUser,
+        payload.eventId
+      ).then(
+        (response) => {
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    getAll: async (context, payload) => {
+      return await EventService.getAll(payload.currentUser).then(
+        (response) => {
+          //context.commit("successLoaded", data.events);
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          console.log(error);
           //context.commit("");
-          return Promise.reject(data);
-        });
+          return Promise.reject(error);
+        }
+      );
     },
-    updateEvent: async (context, user, eventId, index) => {
-      return await EventService.updateEvent(user, eventId)
+
+    getAllWithDocuments: async (context, payload) => {
+      return await EventService.getAllWithDocuments(payload.currentUser).then(
+        (response) => {
+          //context.commit("successLoaded", data.events);
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          console.log(error);
+          //context.commit("");
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    updateDates: async (context, payload) => {
+      return await EventService.updateDates(
+        payload.currentUser,
+        payload.eventId,
+        payload.start_date,
+        payload.c_1_date,
+        payload.c_plus_1_date,
+        payload.finist_date
+      )
         .then((data) => {
-          console.log({ status: "success", data });
-          context.commit("successUpdated", data.event, index);
-          return Promise.resolve(data.event);
+          //console.log({ status: "success" });
+          //context.commit("successUpdated", data.event, payload.index);
+          return Promise.resolve(data);
         })
         .catch((data) => {
           console.log(data);
           return Promise.reject(data);
         });
     },
-    deleteEvent: async (context, user, eventId, index) => {
-      return await EventService.deleteEvent(user, eventId)
+
+    updateTitle: async (context, payload) => {
+      return await EventService.updateTitle(
+        payload.currentUser,
+        payload.eventId,
+        payload.title
+      )
         .then((data) => {
-          console.log({ status: "success", data });
-          context.commit("successDeleted", data.event, index);
-          return Promise.resolve(data.event);
+          //console.log({ status: "success" });
+          //context.commit("successUpdated", data.event, payload.index);
+          return Promise.resolve(data);
         })
         .catch((data) => {
           console.log(data);
           return Promise.reject(data);
         });
     },
-    createEvent: async (context, user, eventData) => {
-      return await EventService.deleteEvent(user, eventData)
-        .then((data) => {
-          console.log({ status: "success", data });
-          context.commit("successCreated", data.event);
-          return Promise.resolve(data.event);
+
+    delete: async (context, payload) => {
+      return await EventService.delete(payload.currentUser, payload.eventId)
+        .then((response) => {
+          //console.log({ status: "success", data });
+          //context.commit("successDeleted", data.event, payload.index);
+          return Promise.resolve(response.data);
         })
-        .catch((data) => {
-          console.log(data);
-          return Promise.reject(data);
+        .catch((error) => {
+          //console.log(data);
+          return Promise.reject(error);
+        });
+    },
+
+    assign: async (context, payload) => {
+      return await EventService.assignUser(
+        payload.currentUser,
+        payload.userId,
+        payload.eventId,
+        payload.roleId
+      )
+        .then((response) => {
+          //console.log({ status: "success", data });
+          return Promise.resolve(response.data);
+        })
+        .catch((error) => {
+          //console.log({ status: "success", error });
+          return Promise.reject(error);
+        });
+    },
+
+    remove: async (context, payload) => {
+      return await EventService.removeUser(
+        payload.currentUser,
+        payload.eventId,
+        payload.userId
+      )
+        .then((response) => {
+          //console.log({ status: "success", data });
+          return Promise.resolve(response.data);
+        })
+        .catch((error) => {
+          //console.log({ status: "success", error });
+          return Promise.reject(error);
+        });
+    },
+
+    create: async (context, payload) => {
+      return await EventService.create(
+        payload.currentUser,
+        payload.start_date,
+        payload.c_1_date,
+        payload.c_plus_1_date,
+        payload.finist_date,
+        payload.imageBase64
+      )
+        .then((response) => {
+          //console.log({ status: "success", data });
+          //context.commit("successCreated", data.event);
+          return Promise.resolve({ status: true });
+        })
+        .catch((error) => {
+          console.log(error);
+          return Promise.reject(error);
+        });
+    },
+
+    uploadImage: async (context, payload) => {
+      return await EventService.uploadImage(
+        payload.currentUser,
+        payload.eventId,
+        payload.imageBase64
+      )
+        .then((response) => {
+          //console.log({status: true}, response.data);
+          return Promise.resolve(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+          return Promise.reject(error);
+        });
+    },
+
+    deleteImage: async (context, payload) => {
+      return await EventService.deleteImage(
+        payload.currentUser,
+        payload.eventId
+      )
+        .then((response) => {
+          //console.log({status: true}, response.data);
+          return Promise.resolve(response.data);
+        })
+        .catch((error) => {
+          console.log(error);
+          return Promise.reject(error);
         });
     },
   },
@@ -80,11 +213,17 @@ export const event = {
         console.log(e);
       }
     },
+    successLoaded(events) {
+      state.events = events;
+    },
   },
 
   getters: {
     getEvents: (state) => {
       return state.events;
+    },
+    getEvent: (state) => (index) => {
+      return state.events[index];
     },
   },
 };

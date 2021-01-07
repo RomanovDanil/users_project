@@ -1,13 +1,9 @@
 <template>
   <v-app>
-    <v-container fluid class="pa-0 ma-0">
-      <v-row class="ma-0 pa-0">
-        <v-col cols="12" sm="12" md="12" class="ma-0 pa-0">
+    <v-container fluid>
+      <v-row class="ma-0 pa-0" justify="center">
+        <v-col cols="12" sm="12" md="5">
           <v-card>
-            <v-toolbar color="primary" dark flat>
-              <v-toolbar-title>Update login information</v-toolbar-title>
-              <v-spacer></v-spacer>
-            </v-toolbar>
             <v-row class="mx-0" justify="center">
               <v-col cols="12" md="12" class="text-left">
                 <v-form v-model="isValid" align="center">
@@ -47,20 +43,22 @@
 
                   <v-text-field
                     label="Repeat new password"
-                    v-model="repeat_newPassword"
+                    v-model="newPasswordConfirmation"
                     prepend-icon="lock"
                     :rules="[
-                      repeat_new_password_rules.required,
+                      new_password_confirmation_rules.required,
                       newPasswordConfirmationRule,
                     ]"
                     :append-icon="
-                      repeatNewPasswordVisible ? 'visibility' : 'visibility_off'
+                      newPasswordConfirmationVisible
+                        ? 'visibility'
+                        : 'visibility_off'
                     "
                     @click:append="
                       () =>
-                        (repeatNewPasswordVisible = !repeatNewPasswordVisible)
+                        (newPasswordConfirmationVisible = !newPasswordConfirmationVisible)
                     "
-                    :type="repeatNewPasswordVisible ? 'text' : 'password'"
+                    :type="newPasswordConfirmationVisible ? 'text' : 'password'"
                     color="light-blue lighten-1"
                     required
                   >
@@ -78,6 +76,14 @@
               </v-col>
             </v-row>
           </v-card>
+          <v-snackbar
+            timeout="6000"
+            bottom="bottom"
+            :color="color"
+            v-model="snackbar"
+          >
+            {{ message }}
+          </v-snackbar>
         </v-col>
       </v-row>
     </v-container>
@@ -94,26 +100,33 @@ export default {
     },
     newPasswordConfirmationRule: function() {
       return () =>
-        this.password === this.repeatPassword || "Passwords must match";
+        this.newPassword === this.newPasswordConfirmation ||
+        "Passwords must match";
     },
   },
+  created() {
+    this.$store.dispatch("pages/setPageName", "Update login information");
+  },
   data: () => ({
+    snackbar: false,
+    message: "",
+    color: "red lighten-1",
     selectedItem: 0,
     isValid: true,
     loading: false,
     currentPassword: "",
-    newPassword: "",
-    repeat_newPassword: "",
-    repeatNewPasswordVisible: false,
-    newPasswordVisible: false,
     currentPasswordVisible: false,
+    newPassword: "",
+    newPasswordVisible: false,
+    newPasswordConfirmation: "",
+    newPasswordConfirmationVisible: false,
     new_password_rules: [
       (v) => !!v || "New password is required",
       (v) => (v && v.length >= 5) || "New password must have 5+ characters",
       (v) => /(?=.*\d)/.test(v) || "Must have one number",
       (v) => /([!@$%])/.test(v) || "Must have one special character [!@#$%]",
     ],
-    repeat_new_password_rules: {
+    new_password_confirmation_rules: {
       required: (v) => !!v || "Password is required",
     },
   }),
@@ -130,11 +143,22 @@ export default {
           user: this.currentUser,
           currentPassword: this.currentPassword,
           newPassword: this.newPassword,
-          repeat_newPassword: this.repeat_newPassword,
+          newPasswordConfirmation: this.newPasswordConfirmation,
         })
-        .then(() => {})
-        .catch((data) => {
-          console.log(data);
+        .then(() => {
+          this.message = "Password was been updated";
+          this.color = "success";
+          this.snackbar = true;
+        })
+        .catch((error) => {
+          console.log(error);
+          if (error.response) {
+            this.message = error.response.data.message;
+          } else {
+            this.message = error.message;
+          }
+          this.color = "red lighten-1";
+          this.snackbar = true;
         });
       this.loading = false;
     },
