@@ -1,15 +1,25 @@
 const { Schema, model, Types } = require("mongoose");
 
 const schema = new Schema({
-  user: {
-    type: Types.ObjectId,
-    required: true,
-    path: "User",
-  },
   event: {
     type: Types.ObjectId,
+    ref: "Event",
     required: true,
-    path: "Event",
+  },
+  user: {
+    type: Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  role: {
+    type: Types.ObjectId,
+    ref: "Role",
+    required: true,
+  },
+  deleted: {
+    type: Boolean,
+    required: false,
+    default: false,
   },
 });
 

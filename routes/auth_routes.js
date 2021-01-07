@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const multer = require("multer");
 const path = require("path");
-const { check, validationResult } = require("express-validator");
+const { check, validationResult, body } = require("express-validator");
 const { exception } = require("console");
 
 const router = Router();
@@ -45,15 +45,22 @@ router.post(
     check("password", "The minimum password length is 6 characters").isLength({
       min: 6,
     }),
-    check("firstName", "Name not filled in!").isEmpty(),
-    check("secondName", "Last name not filled in!").isEmpty(),
-    check("thirdName", "Middle name not filled in!").isEmpty(),
-    check("country", "Country not selected!").isEmpty(),
+    check("firstName", "First name not filled in!").notEmpty(),
+    check("secondName", "Secind name not filled in!").notEmpty(),
+    check("thirdName", "Third name not filled in!").notEmpty(),
+    check("country", "Country not selected!").notEmpty(),
+    body("passwordConfirmation").custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error("Password confirmation does not match password");
+      }
+      return true;
+    }),
   ],
   async (req, res) => {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty) {
+      if (!errors.isEmpty()) {
+        console.log(errors);
         return res.status(400).json({
           errors: errors.array(),
           message: "Incorrect data was entered during registration",
@@ -62,30 +69,24 @@ router.post(
       const {
         email,
         password,
-        repeatPassword,
+        passwordConfirmation,
         firstName,
         secondName,
         thirdName,
         country,
+        imageBase64,
       } = req.body;
 
       //проверить наличие email в базе
-      const curUser = await User.findOne({ email });
-      if (curUser) {
+      const currentUser = await User.findOne({ email });
+      if (currentUser) {
         return res
           .status(400)
           .json({ message: "A user with this email already exists" });
       }
 
-      if (password !== repeatPassword) {
+      if (password !== passwordConfirmation) {
         return res.status(400).json({ message: "Passwords dont match" });
-      }
-
-      //роль по умолчанию
-      const role = Role.findOne({ name: "No role" });
-      if (!role) {
-        console.log({ message: "Role 'No role' is not exists" });
-        return res.status(400).json("Role 'No role' is not exists");
       }
 
       //создание пользовательских данных
@@ -94,30 +95,23 @@ router.post(
         secondName,
         thirdName,
         country,
-        role: (await role)._id,
       });
 
-      //если было загружено изображение
-      await upload(req, res, (err) => {
-        errorMessage = "";
-        if (err) {
-          if (err.code === "LIMIT_FILE_SIZE") {
-            return res
-              .status(400)
-              .json({ message: "The image size is no more than 4 MB!" });
-          } else if (err.code === "EXTENTION") {
-            return res.status(400).json({
-              message: "The image must be in .png, .jpg, or .jpeg format",
-            });
-          } else {
-            return res.status(400).json({ message: err.message });
+      if (imageBase64) {
+        base64img.img(
+          imageBase64.image,
+          "./uploads/user_images",
+          Date.now(),
+          async function (err, filepath) {
+            if (err) {
+              return res.status(500).json({ message: err.message });
+            }
+
+            const pathArr = filepath.split("\\");
+            const imageName = pathArr[pathArr.length - 1];
+            userData.image = imageName;
           }
-        }
-      });
-
-      if (req.file) {
-        imagePath = req.file.path;
-        userData.image = imagePath;
+        );
       }
 
       //сохранение пользовательских данных
@@ -151,7 +145,7 @@ router.post(
   async (req, res) => {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty) {
+      if (!errors.isEmpty()) {
         return res.status(400).json({
           errors: errors.array(),
           message: "Invalid login information was entered",
@@ -160,22 +154,22 @@ router.post(
       const { email, password } = req.body;
 
       //поиск пользователя в базе
-      const curUser = await User.findOne({
+      const currentUser = await User.findOne({
         email: email,
         confirmed: true,
         deleted: false,
       }).populate({
         path: "userData",
         populate: {
-          path: "country role",
+          path: "country",
         },
       });
 
-      if (!curUser) {
+      if (!currentUser) {
         return res.status(400).json({ message: "User is not exists" });
       }
 
-      bcrypt.compare(password, curUser.password, function (err, result) {
+      bcrypt.compare(password, currentUser.password, function (err, result) {
         if (err) return res.status(500).json({ message: err.message });
         else if (!result) {
           return res
@@ -183,15 +177,16 @@ router.post(
             .json({ message: "Email or password entered incorrectly" });
         } else {
           const token = jwt.sign(
-            { user: curUser },
+            { userId: currentUser._id },
             config.get("jwtSecretKey"),
             { expiresIn: "1d" }
           );
           return res.status(200).json({
             token,
-            id: curUser._id,
-            email: curUser.email,
-            userData: curUser.userData,
+            id: currentUser._id,
+            email: currentUser.email,
+            isAdmin: currentUser.isAdmin,
+            userData: currentUser.userData,
           });
         }
       });

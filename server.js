@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const config = require("config");
 //прасер запросов
 const bodyParser = require("body-parser");
+const cors = require("cors");
 
 //инициализация сервера
 server = express();
@@ -13,21 +14,24 @@ server = express();
 const port = config.get("server.port") || 5000;
 const hostname = config.get("server.hostname") || "localhost";
 
-server.use(bodyParser.urlencoded({ extended: true }));
-server.use(bodyParser.json());
+server.use(cors());
+server.use(express.static("./uploads"));
+server.use(bodyParser.json({ limit: "50mb" }));
+server.use(
+  bodyParser.urlencoded({
+    limit: "50mb",
+    extended: true,
+    parameterLimit: 50000,
+  })
+);
 
 //обработка запросов с доверенных серверов
 server.use((req, res, next) => {
-  // const allowedOrigins = ['http://127.0.0.1:8081', 'http://localhost:8081', 'http://127.0.0.1:8082', 'http://localhost:8082'];
-  // const origin = req.headers.origin;
-  // if (allowedOrigins.includes(origin)) {
-  //     res.setHeader('Access-Control-Allow-Origin', origin);
-  // }
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, OPTIONS, PUT, POST, DELETE");
   res.header(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, x-access-token"
+    "Accept, Content-Type, Authorization, x-www-form-urlencoded"
   );
   res.header("Access-Control-Allow-Credentials", true);
   return next();
@@ -38,7 +42,7 @@ server.use("/api/user", require("./routes/user_routes"));
 server.use("/api/country", require("./routes/country_routes"));
 server.use("/api/role", require("./routes/role_routes"));
 server.use("/api/event", require("./routes/event_routes"));
-server.use(express.static("uploads"));
+server.use("/api/document", require("./routes/document_routes"));
 
 //подключение к mongodb и запуск сервера
 async function start() {
@@ -47,7 +51,7 @@ async function start() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useCreateIndex: true,
-      useFindAndModify: true,
+      useFindAndModify: false,
     });
     server.listen(port, hostname);
     console.log(`Server has been started on port: ${port}`);

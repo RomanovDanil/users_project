@@ -2,12 +2,15 @@ const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const UserData = require("../models/UserData");
-const multer = require("multer");
-const path = require("path");
-const validator = require("validator");
-const { check, validationResult } = require("express-validator");
+const Role = require("../models/Role");
+//const multer = require("multer");
+//const path = require("path");
+//const validator = require("validator");
+const { check, validationResult, body } = require("express-validator");
+const base64img = require("base64-img");
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const fs = require("fs");
 
 const router = Router();
 
@@ -27,48 +30,20 @@ const authenticateJWT = (req, res, next) => {
     res.sendStatus(401);
   }
 };
-
-//инициализация хранилища изображений
-var storage = multer.diskStorage({
-  destination: "./uploads/user_images/",
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      new Date().toISOString() +
-        "_" +
-        file.filename +
-        "_" +
-        path.extname(file.originalname)
-    );
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 4 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    if (ext !== ".jpeg" && ext !== ".jpg" && ext !== ".png") {
-      const err = new Error("Extention");
-      err.code = "EXTENTION";
-      return cb(err);
-    }
-    cb(null, true);
-  },
-}).single("image");
+router.use(authenticateJWT);
 
 // /api/user/getById
 router.get("/getById", async (req, res) => {
   try {
-    const { _id } = req.query;
+    const { userId } = req.query;
     const currentUser = await User.findOne({
-      _id: _id,
+      _id: userId,
       confirmed: true,
       deleted: false,
     }).populate({
       path: "userData",
       populate: {
-        path: "country role",
+        path: "country",
       },
     });
 
@@ -83,53 +58,78 @@ router.get("/getById", async (req, res) => {
 });
 
 // /api/user/updatePassword
-router.put("/updatePassword", authenticateJWT, async (req, res) => {
-  try {
-    const { _id, currentPassword, newPassword, repeat_newPassword } = req.body;
-    const currentUser = await User.findOne({
-      _id,
-      deleted: false,
-      confirmed: true,
-    });
-    if (!currentUser) {
-      return res.status(400).json({ message: "User is not exists" });
+router.put(
+  "/updatePassword",
+  [
+    check(
+      "currentPassword",
+      "The minimum password length is 6 characters"
+    ).isLength({
+      min: 6,
+    }),
+    check(
+      "newPassword",
+      "The minimum password length is 6 characters"
+    ).isLength({
+      min: 6,
+    }),
+    body("newPasswordConfirmation").custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error("Password confirmation does not match password");
+      }
+      return true;
+    }),
+  ],
+  async (req, res) => {
+    try {
+      const {
+        _id,
+        currentPassword,
+        newPassword,
+        newPasswordConfirmation,
+      } = req.body;
+      const currentUser = await User.findOne({
+        _id,
+        deleted: false,
+        confirmed: true,
+      });
+      if (!currentUser) {
+        return res.status(400).json({ message: "User is not exists" });
+      }
+
+      const isMatch = await bcrypt.compare(
+        currentPassword,
+        currentUser.password
+      );
+      if (!isMatch) {
+        return res
+          .status(400)
+          .json({ message: "Password entered incorrectly", status: false });
+      }
+
+      newPasswordHash = await bcrypt.hash(newPassword, 15);
+
+      currentUser.password = newPasswordHash;
+      await currentUser.save();
+
+      return res.json({
+        message: "The password change is successful",
+        status: true,
+      });
+    } catch (e) {
+      return res.status(500).json({ message: e.message, status: false });
     }
-
-    if (newPassword !== repeat_newPassword) {
-      return res
-        .status(400)
-        .json({ message: "New passwords don't match", status: false });
-    }
-
-    const isMatch = await bcrypt.compare(currentPassword, currentUser.password);
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: "Password entered incorrectly", status: false });
-    }
-
-    newPasswordHash = await bcrypt.hash(newPassword, 15);
-
-    currentUser.password = newPasswordHash;
-    await currentUser.save();
-
-    return res.json({
-      message: "The password change is successful",
-      status: true,
-    });
-  } catch (e) {
-    return res.status(500).json({ message: e.message, status: false });
   }
-});
+);
 
-// /api/user/get
-router.get("/get", async (req, res) => {
+// /api/user/getAll
+router.get("/getAll", async (req, res) => {
   try {
     const users = await User.find({ confirmed: true, deleted: false }).populate(
       {
         path: "userData",
         populate: {
-          path: "country role",
+          path: "country",
         },
       }
     );
@@ -145,104 +145,157 @@ router.get("/get", async (req, res) => {
 });
 
 // /api/user/update
-router.put("/updateUserData", authenticateJWT, async (req, res) => {
-  try {
-    const { userDataId, newUserData } = req.body;
-
-    errors = [];
-    for (key in newUserData) {
-      if (newUserData[key] == null || newUserData[key] == "") {
-        errors.push({ property: key, message: "Value is empty" });
+router.post(
+  "/updateUserData",
+  [
+    check("firstName", "First name not filled in!").notEmpty(),
+    check("secondName", "Secind name not filled in!").notEmpty(),
+    check("thirdName", "Third name not filled in!").notEmpty(),
+    check("countryId", "Country not selected!").notEmpty(),
+  ],
+  async (req, res) => {
+    try {
+      //validation
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(400).json({
+          errors: errors.array(),
+          message: "Incorrect data was entered during update",
+        });
       }
-    }
 
-    if (errors.lenght > 0) {
-      return res
-        .status(400)
-        .json({ errors: errors, message: "Incorrect user's data" });
-    }
+      const {
+        userDataId,
+        firstName,
+        secondName,
+        thirdName,
+        about,
+        countryId,
+      } = req.body;
 
-    const userData = await UserData.findByIdAndUpdate(userDataId, newUserData, {
-      new: true,
-    }).populate("country role");
+      const userData = await UserData.findByIdAndUpdate(
+        userDataId,
+        { firstName, secondName, thirdName, about, country: countryId },
+        {
+          new: true,
+        }
+      ).populate({
+        path: "country",
+      });
 
-    if (!userData) {
-      return res
-        .status(400)
-        .json({ errors: errors, message: "User's data not found" });
-    }
-
-    return res.json({ userData });
-  } catch (e) {
-    res.status(500).json({ message: e.message });
-  }
-});
-
-router.put("/uploadImage", authenticateJWT, async (req, res) => {
-  const { userDataId } = req.body;
-
-  await upload(req, res, (err) => {
-    errorMessage = "";
-    if (err) {
-      if (err.code === "LIMIT_FILE_SIZE") {
+      if (!userData) {
         return res
           .status(400)
-          .json({ message: "The image size is no more than 4 MB!" });
-      } else if (err.code === "EXTENTION") {
-        return res.status(400).json({
-          message: "The image must be in .png, .jpg, or .jpeg format",
-        });
-      } else {
-        return res.status(400).json({ message: err.message });
+          .json({ status: false, message: "User's data not found" });
       }
+
+      return res.json({ status: true, userData: userData });
+    } catch (e) {
+      res.status(500).json({ status: false, message: e.message });
     }
-  });
+  }
+);
 
-  if (req.file) {
-    imagePath = req.file.path;
+router.post("/setPin", async (req, res) => {
+  try {
+    const { userDataId, pin } = req.body;
 
-    userData = UserData.findByIdAndUpdate(
+    userData = await UserData.findByIdAndUpdate(
       userDataId,
-      { image: imagePath },
+      { pin: pin },
       { new: true }
     );
 
     if (userData) {
-      return res.status.json({
-        message: "Data was successfully updated",
-        userData,
+      return res.json({
+        message: "PIN was updated success",
+        status: true,
       });
     } else {
-      return res.status(400).json({ message: "Users data is not exists" });
+      return res
+        .status(400)
+        .json({ message: "User's data not found", status: false });
     }
-  } else {
-    return res.status(400).json({ message: "Image not found" });
+  } catch (e) {
+    return res.status(500).json({ message: e.message, status: false });
+  }
+});
+
+// /api/user/uploadImage
+router.post("/uploadImage", async (req, res) => {
+  try {
+    const { userDataId, imageBase64 } = req.body;
+
+    if (imageBase64) {
+      base64img.img(
+        imageBase64.image,
+        "./uploads/user_images",
+        Date.now(),
+        async function (err, filepath) {
+          if (err) {
+            return res.status(500).json({ message: err.message });
+          }
+
+          const pathArr = filepath.split("\\");
+          const imageName = pathArr[pathArr.length - 1];
+          userData = await UserData.findByIdAndUpdate(
+            userDataId,
+            { image: imageName },
+            { new: true }
+          );
+
+          if (userData) {
+            return res.json({
+              message: "Data was successfully updated",
+              image: imageName,
+              status: true,
+            });
+          } else {
+            return res
+              .status(400)
+              .json({ message: "User's data not found", status: false });
+          }
+        }
+      );
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Image not found", status: false });
+    }
+  } catch (e) {
+    return res.status(500).json({ message: e.message, status: false });
   }
 });
 
 // /api/user/deleteImage
-router.put("/deleteImage", authenticateJWT, async (req, res) => {
+router.post("/deleteImage", async (req, res) => {
   try {
     const { userDataId } = req.body;
-    userData = await UserData.findByIdAndUpdate(
-      userDataId,
-      { image: "default" },
-      { new: true }
-    );
+    userData = await UserData.findByIdAndUpdate(userDataId, { image: "" });
     if (userData) {
-      return res.json({ userData });
+      fs.unlink("./uploads/user_images/" + userData.image, (err) => {
+        if (err) console.log(err);
+      });
+
+      return res.json({ status: true });
     } else {
-      return res.status(400).json({ message: "User's data not found" });
+      return res
+        .status(400)
+        .json({ message: "User's data not found", status: false });
     }
   } catch (e) {
-    return res.status(500).json({ message: e.message });
+    return res.status(500).json({ message: e.message, status: false });
   }
 });
 
-router.delete("/delete", authenticateJWT, async (req, res) => {
+router.delete("/delete", async (req, res) => {
   try {
-    const { _id } = req.body;
-    const user = await User.findOneAndUpdate({ _id }, { deleted: true });
+    const { userId } = req.body;
+    const user = await User.findOneAndUpdate(
+      { _id: userId, deleted: false },
+      { deleted: true }
+    );
     if (user) {
       res.status.json({ message: "User was successfully deleted" });
     } else {
@@ -252,5 +305,111 @@ router.delete("/delete", authenticateJWT, async (req, res) => {
     res.status(500).json({ message: e.message });
   }
 });
+
+router.post("/setAdmin", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({
+      email,
+      deleted: false,
+      confirmed: true,
+    });
+    if (!user) return res.status(400).json({ message: "User not found" });
+
+    user.isAdmin = true;
+    await user.save();
+    return res.json({ message: "The role is successfully assigned" });
+  } catch (e) {
+    return res.status(500).json({ message: e.message });
+  }
+});
+
+router.post(
+  "/create",
+  [
+    check("email", "Incorrect email address entered").isEmail(),
+    check("password", "The minimum password length is 6 characters").isLength({
+      min: 6,
+    }),
+    check("firstName", "First name not filled in!").notEmpty(),
+    check("secondName", "Secind name not filled in!").notEmpty(),
+    check("thirdName", "Third name not filled in!").notEmpty(),
+    check("country", "Country not selected!").notEmpty(),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(400).json({
+          errors: errors.array(),
+          message: "Incorrect data was entered during registration",
+        });
+      }
+      const {
+        email,
+        password,
+        repeatPassword,
+        firstName,
+        secondName,
+        thirdName,
+        country,
+        imageBase64,
+      } = req.body;
+
+      //проверить наличие email в базе
+      const currentUser = await User.findOne({ email });
+      if (currentUser) {
+        return res
+          .status(400)
+          .json({ message: "A user with this email already exists" });
+      }
+
+      if (password !== repeatPassword) {
+        return res.status(400).json({ message: "Passwords dont match" });
+      }
+
+      //создание пользовательских данных
+      const userData = new UserData({
+        firstName,
+        secondName,
+        thirdName,
+        country,
+      });
+
+      if (imageBase64) {
+        base64img.img(
+          imageBase64.image,
+          "./uploads/user_images",
+          Date.now(),
+          async function (err, filepath) {
+            if (err) {
+              return res.status(500).json({ message: err.message });
+            }
+
+            const pathArr = filepath.split("\\");
+            const imageName = pathArr[pathArr.length - 1];
+            userData.image = imageName;
+          }
+        );
+      }
+
+      //сохранение пользовательских данных
+      await userData.save();
+
+      //хеширование пароля
+      const hashPassword = await bcrypt.hash(password, 15);
+
+      //создание пользователя
+      const user = new User({ email, password: hashPassword, userData });
+      //сохранение пользователя в базе
+      await user.save();
+      //ответ
+      res.status(201).json({ message: "User was created successfully" });
+    } catch (e) {
+      return res.status(500).json({ message: e.message });
+    }
+  }
+);
 
 module.exports = router;
