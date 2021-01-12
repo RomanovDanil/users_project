@@ -9,7 +9,7 @@ const multer = require("multer");
 const path = require("path");
 const { check, validationResult, body } = require("express-validator");
 const { exception } = require("console");
-
+const base64img = require("base64-img");
 const router = Router();
 
 //инициализация хранилища изображений
@@ -98,20 +98,14 @@ router.post(
       });
 
       if (imageBase64) {
-        base64img.img(
+        const filepath = base64img.imgSync(
           imageBase64.image,
           "./uploads/user_images",
-          Date.now(),
-          async function (err, filepath) {
-            if (err) {
-              return res.status(500).json({ message: err.message });
-            }
-
-            const pathArr = filepath.split("\\");
-            const imageName = pathArr[pathArr.length - 1];
-            userData.image = imageName;
-          }
+          Date.now()
         );
+        const pathArr = filepath.split("\\");
+        const imageName = pathArr[pathArr.length - 1];
+        userData.image = imageName;
       }
 
       //сохранение пользовательских данных
@@ -125,7 +119,7 @@ router.post(
       //сохранение пользователя в базе
       await user.save();
       //ответ
-      res.status(201).json({ message: "User was created successfully" });
+      res.status(200).json({ message: "User was created successfully" });
     } catch (e) {
       return res.status(500).json({ message: e.message });
     }

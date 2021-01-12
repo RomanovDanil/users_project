@@ -2,7 +2,8 @@ const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const UserData = require("../models/UserData");
-const Role = require("../models/Role");
+//const Role = require("../models/Role");
+const Event = require("../models/Event");
 //const multer = require("multer");
 //const path = require("path");
 //const validator = require("validator");
@@ -50,7 +51,7 @@ router.get("/getById", async (req, res) => {
     if (currentUser) {
       return res.json({ user: currentUser });
     } else {
-      return res.status(400).json({ message: "User is not exists" });
+      return res.status(400).json({ message: "User not found" });
     }
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -83,18 +84,18 @@ router.put(
   async (req, res) => {
     try {
       const {
-        _id,
+        userId,
         currentPassword,
         newPassword,
         newPasswordConfirmation,
       } = req.body;
       const currentUser = await User.findOne({
-        _id,
+        _id: userId,
         deleted: false,
         confirmed: true,
       });
       if (!currentUser) {
-        return res.status(400).json({ message: "User is not exists" });
+        return res.status(400).json({ message: "User not found" });
       }
 
       const isMatch = await bcrypt.compare(
@@ -297,9 +298,17 @@ router.delete("/delete", async (req, res) => {
       { deleted: true }
     );
     if (user) {
-      res.status.json({ message: "User was successfully deleted" });
+      await Event.findOneAndUpdate(
+        { deleted: false, "participants.user": userId },
+        {
+          $pull: {
+            participants: { user: userId },
+          },
+        }
+      );
+      res.json({ message: "User successfully deleted" });
     } else {
-      res.status(400).json({ message: "User is not exists" });
+      res.status(400).json({ message: "User not found" });
     }
   } catch (e) {
     res.status(500).json({ message: e.message });
@@ -349,7 +358,7 @@ router.post(
       const {
         email,
         password,
-        repeatPassword,
+        passwordConfirmation,
         firstName,
         secondName,
         thirdName,
@@ -365,7 +374,7 @@ router.post(
           .json({ message: "A user with this email already exists" });
       }
 
-      if (password !== repeatPassword) {
+      if (password !== passwordConfirmation) {
         return res.status(400).json({ message: "Passwords dont match" });
       }
 
@@ -378,20 +387,14 @@ router.post(
       });
 
       if (imageBase64) {
-        base64img.img(
+        const filepath = base64img.imgSync(
           imageBase64.image,
           "./uploads/user_images",
-          Date.now(),
-          async function (err, filepath) {
-            if (err) {
-              return res.status(500).json({ message: err.message });
-            }
-
-            const pathArr = filepath.split("\\");
-            const imageName = pathArr[pathArr.length - 1];
-            userData.image = imageName;
-          }
+          Date.now()
         );
+        const pathArr = filepath.split("\\");
+        const imageName = pathArr[pathArr.length - 1];
+        userData.image = imageName;
       }
 
       //сохранение пользовательских данных

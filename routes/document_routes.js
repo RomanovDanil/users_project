@@ -164,14 +164,24 @@ router.get("/getByEventId", async (req, res) => {
 // /api/documents/getAll
 router.get("/getAll", async (req, res) => {
   try {
-    const documents = await Document.find({ deleted: false })
-      .populate({ path: "event", model: Event, select: "title" })
-      .populate("for_role");
-    if (documents) {
-      return res.json({ documents: documents });
-    } else {
-      return res.status(400).json({ message: "Documents are not exists" });
-    }
+    const documents = await Document.find({
+      deleted: false,
+    })
+      .populate("for_role")
+      .populate({
+        path: "event",
+        model: Event,
+        select: "title",
+        match: { deleted: false },
+      })
+      .exec(async function (err, docs) {
+        if (err) res.status(500).json({ message: err.message });
+        else if (docs == null) res.json({ documents: docs });
+        else {
+          const documents = docs.filter((doc) => doc.event != null);
+          res.json({ documents: documents });
+        }
+      });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }

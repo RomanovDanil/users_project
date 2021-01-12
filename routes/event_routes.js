@@ -7,12 +7,9 @@ const Document = require("../models/Document");
 const { check, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const config = require("config");
-const mongoose = require("mongoose");
 
 const base64img = require("base64-img");
 const fs = require("fs");
-const { DH_CHECK_P_NOT_PRIME } = require("constants");
-const e = require("express");
 
 const router = Router();
 
@@ -100,20 +97,14 @@ router.post(
       });
 
       if (imageBase64) {
-        base64img.img(
+        const filepath = base64img.imgSync(
           imageBase64.image,
           "./uploads/event_images",
-          Date.now(),
-          async function (err, filepath) {
-            if (err) {
-              return res.status(500).json({ message: err.message });
-            }
-
-            const pathArr = filepath.split("\\");
-            const imageName = pathArr[pathArr.length - 1];
-            event.image = imageName;
-          }
+          Date.now()
         );
+        const pathArr = filepath.split("\\");
+        const imageName = pathArr[pathArr.length - 1];
+        event.image = imageName;
       }
 
       await event.save();
@@ -286,6 +277,7 @@ router.get("/getAssignedUsers", async (req, res) => {
       .select({
         email: 1,
         userData: 1,
+        created_at: 1,
         "currentEvent._id": 1,
       });
 
@@ -495,7 +487,7 @@ router.delete("/delete", async (req, res) => {
       { deleted: true }
     );
     if (event) {
-      res.status.json({ message: "Event is successfully deleted" });
+      res.json({ message: "Event is successfully deleted" });
     } else {
       res.status(400).json({ message: "Event is not exists" });
     }
