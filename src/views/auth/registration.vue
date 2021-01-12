@@ -1,10 +1,16 @@
 <template>
   <v-app>
-    <v-container fluid>
-      <v-row class="ma-0 pa-0" justify="center">
+    <v-container class="fill-height" fluid>
+      <v-row align="center" justify="center">
         <v-col cols="12" sm="12" md="5">
-          <v-card class="elevator-1 pb-3">
-            <v-row class="mx-0">
+          <v-card class="elevation-12">
+            <v-app-bar flat>
+              <v-toolbar-title class="title grey--text">
+                Registration
+              </v-toolbar-title>
+            </v-app-bar>
+
+            <v-row class="mx-0 my-0">
               <v-col cols="4">
                 <v-img
                   height="250"
@@ -183,19 +189,23 @@
               </v-col>
             </v-row>
 
-            <v-btn
-              color="light-blue lighten-1"
-              @click.native="Registrate()"
-              :disabled="!isValid"
-              :loading="loading"
-              >Sign Up</v-btn
-            >
+            <v-row class="mt-2">
+              <v-col cols="12">
+                <v-btn
+                  color="light-blue lighten-1 white--text"
+                  @click.native="Registrate()"
+                  :disabled="!isValid"
+                  :loading="loading"
+                  >Sign Up</v-btn
+                >
+              </v-col>
 
-            <v-col cols="12">
-              <div class="text-body text-center">
-                <router-link :to="'/login'">Sign In</router-link>
-              </div>
-            </v-col>
+              <v-col cols="12">
+                <div class="text-body text-center">
+                  <router-link :to="'/login'">Sign In</router-link>
+                </div>
+              </v-col>
+            </v-row>
           </v-card>
 
           <v-snackbar

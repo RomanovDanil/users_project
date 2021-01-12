@@ -3,7 +3,7 @@
     <v-container fluid>
       <v-row class="ma-0 pa-0" justify="center">
         <v-col cols="12" sm="12" md="5">
-          <v-card class="elevator-1 pb-3">
+          <v-card class="elevator-1">
             <v-row class="mx-0">
               <v-col cols="4">
                 <v-img
@@ -107,7 +107,7 @@
 
                     <v-text-field
                       label="Repeat password"
-                      v-model="repeatPassword"
+                      v-model="passwordConfirmation"
                       prepend-icon="lock"
                       :rules="[
                         repeat_password_rules.required,
@@ -178,14 +178,17 @@
                 </v-row>
               </v-col>
             </v-row>
-
-            <v-btn
-              color="light-blue lighten-1"
-              @click.native="UserCreate()"
-              :disabled="!isValid"
-              :loading="loading"
-              >Create</v-btn
-            >
+            <v-row class="mt-3">
+              <v-col>
+                <v-btn
+                  color="light-blue lighten-1 white--text"
+                  @click.native="UserCreate()"
+                  :disabled="!isValid"
+                  :loading="loading"
+                  >Create</v-btn
+                >
+              </v-col>
+            </v-row>
           </v-card>
 
           <v-snackbar
@@ -212,7 +215,7 @@ export default {
     },
     passwordConfirmationRule: function() {
       return () =>
-        this.password === this.repeatPassword || "Passwords must match";
+        this.password === this.passwordConfirmation || "Passwords must match";
     },
   },
   created() {
@@ -229,7 +232,7 @@ export default {
     registratePasswordRepeatVisible: false,
     email: "",
     password: "",
-    repeatPassword: "",
+    passwordConfirmation: "",
     firstName: "",
     color: "red lighten-1",
     secondName: "",
@@ -301,7 +304,7 @@ export default {
           userData: {
             email: this.email,
             password: this.password,
-            repeatPassword: this.repeatPassword,
+            passwordConfirmation: this.passwordConfirmation,
             firstName: this.firstName,
             secondName: this.secondName,
             thirdName: this.thirdName,

@@ -13,7 +13,7 @@
               <v-data-table
                 dense
                 :headers="headers"
-                :items="events"
+                :items="sortedEvents"
                 :loading="eventsLoading"
                 loading-text="Loading... Please wait"
                 item-key="title"
@@ -56,6 +56,44 @@ export default {
   computed: {
     currentUser() {
       return this.$store.state.auth.user;
+    },
+    sortedEvents() {
+      const today = new Date();
+      //console.log(today);
+      return this.events.slice().sort((a, b) => {
+        const a_startDate = new Date(a.start_date);
+        const a_finishDate = new Date(a.finish_date);
+
+        const b_startDate = new Date(b.start_date);
+        const b_finishDate = new Date(b.finish_date);
+        //текущие мероприятия
+        if (
+          a_startDate.getDate() <= today.getDate() &&
+          a_finishDate.getDate() >= today.getDate()
+        ) {
+          if (
+            b_startDate.getDate() <= today.getDate() &&
+            b_finishDate.getDate() >= today.getDate()
+          ) {
+            return a_startDate >= b_startDate ? 1 : -1;
+          }
+          return 1;
+        }
+        //будущие мероприятия
+        if (a_startDate.getDate() > today.getDate()) {
+          if (b_startDate.getDate() > today.getDate()) {
+            return a_startDate <= b_startDate ? 1 : -1;
+          }
+          return 1;
+        }
+        //прошедшие мероприятия
+        if (a_finishDate.getDate() < today.getDate()) {
+          if (b_finishDate.getDate() < today.getDate()) {
+            return a_finishDate > b_finishDate ? 1 : -1;
+          }
+          return 1;
+        }
+      });
     },
   },
   created() {

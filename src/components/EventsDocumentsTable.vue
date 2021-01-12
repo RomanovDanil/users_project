@@ -87,11 +87,9 @@
       </v-card>
     </v-col>
     <v-col v-else>
-      <v-card>
-        <v-card-title>
-          Events not found
-        </v-card-title>
-      </v-card>
+      <v-card-title>
+        Event's documents not found
+      </v-card-title>
     </v-col>
   </v-row>
 </template>

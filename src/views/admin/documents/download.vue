@@ -4,11 +4,12 @@
       <v-row justify="center">
         <v-col cols="12" sm="12" md="6" class="ma-0">
           <v-row class="mx-0">
-            <v-col cols="12">
+            <v-col cols="12" v-if="loadedSuccess">
               <v-app id="inspire">
                 <v-data-table
                   :headers="headers"
                   :items="documents"
+                  :loading="documentsLoading"
                   item-key="_id"
                   group-by="event._id"
                 >
@@ -39,6 +40,11 @@
                   </template>
                 </v-data-table>
               </v-app>
+            </v-col>
+            <v-col v-else>
+              <v-card-title>
+                Event's documents not found
+              </v-card-title>
             </v-col>
           </v-row>
         </v-col>
@@ -87,6 +93,7 @@ export default {
   },
   data: () => ({
     loadedSuccess: true,
+    documentsLoading: true,
     documents: [],
     snackbar: false,
     snackbar_message: "",
@@ -100,18 +107,26 @@ export default {
   },
   methods: {
     async setPageName() {
-      this.$store.dispatch("pages/setPageName", "Documents");
+      this.$store.dispatch("pages/setPageName", "Download documents");
     },
     async loadDocuments() {
       this.$store
         .dispatch("document/getAll", { currentUser: this.currentUser })
         .then((data) => {
-          this.documents = data.documents;
+          if (data.documents == null || data.documents == undefined) {
+            this.loadedSuccess = false;
+          } else if (data.documents.length == 0) {
+            this.loadedSuccess = false;
+          } else {
+            this.documents = data.documents;
+          }
+          this.documentsLoading = false;
         })
         .catch((error) => {
           this.snackbar_message = error.message;
           this.snackbar_color = "red lighten-1";
           this.snackbar = true;
+          this.loadedSuccess = false;
         });
     },
 

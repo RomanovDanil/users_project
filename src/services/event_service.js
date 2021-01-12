@@ -116,19 +116,17 @@ class EventService {
   }
 
   delete(currentUser, eventId) {
-    return Axios.delete(
-      `${UsersAPI}/api/event/delete`,
-      {
+    //console.log(currentUser);
+    return Axios.delete(`${UsersAPI}/api/event/delete`, {
+      data: {
         eventId,
       },
-      {
-        headers: {
-          Authorization: "Bearer " + currentUser.token,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
+      headers: {
+        Authorization: "Bearer " + currentUser.token,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
   }
 
   create(

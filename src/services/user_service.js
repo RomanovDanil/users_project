@@ -109,6 +109,7 @@ class UserService {
 
   updatePassword(
     currentUser,
+    userId,
     currentPassword,
     newPassword,
     newPasswordConfirmation
@@ -119,7 +120,7 @@ class UserService {
         currentPassword,
         newPassword,
         newPasswordConfirmation,
-        _id: user.id,
+        userId,
       },
       {
         headers: {
@@ -155,6 +156,19 @@ class UserService {
 
   create(currentUser, userData) {
     return axios.post(UsersAPI + "/user/create", userData, {
+      headers: {
+        Authorization: "Bearer " + currentUser.token,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+  }
+
+  delete(currentUser, userId) {
+    return axios.delete(`${UsersAPI}/user/delete`, {
+      data: {
+        userId,
+      },
       headers: {
         Authorization: "Bearer " + currentUser.token,
         "Content-Type": "application/json",

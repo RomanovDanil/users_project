@@ -1,6 +1,6 @@
 <template>
   <v-app class="grey lighten-4">
-    <NavBar v-bind:currentUser="currentUser" />
+    <NavBar />
     <v-main>
       <router-view />
     </v-main>
@@ -12,11 +12,7 @@ import NavBar from "@/components/NavBar";
 
 export default {
   name: "app",
-  computed: {
-    currentUser() {
-      return this.$store.state.auth.user;
-    },
-  },
+  computed: {},
   components: {
     NavBar,
   },

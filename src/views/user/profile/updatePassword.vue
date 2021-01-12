@@ -140,7 +140,8 @@ export default {
       this.loading = true;
       await this.$store
         .dispatch("user/updatePassword", {
-          user: this.currentUser,
+          currentUser: this.currentUser,
+          userId: this.currentUser.id,
           currentPassword: this.currentPassword,
           newPassword: this.newPassword,
           newPasswordConfirmation: this.newPasswordConfirmation,

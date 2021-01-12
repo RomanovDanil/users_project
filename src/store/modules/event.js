@@ -60,6 +60,18 @@ export const event = {
       );
     },
 
+    getAssignedUsers: async (context, payload) => {
+      return await EventService.getAssignedUsers(payload.currentUser).then(
+        (response) => {
+          return Promise.resolve(response.data);
+        },
+        (error) => {
+          console.log(error);
+          return Promise.reject(error);
+        }
+      );
+    },
+
     updateDates: async (context, payload) => {
       return await EventService.updateDates(
         payload.currentUser,
@@ -67,7 +79,7 @@ export const event = {
         payload.start_date,
         payload.c_1_date,
         payload.c_plus_1_date,
-        payload.finist_date
+        payload.finish_date
       )
         .then((data) => {
           //console.log({ status: "success" });

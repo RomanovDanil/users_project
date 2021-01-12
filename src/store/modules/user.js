@@ -19,7 +19,8 @@ export default {
 
     updatePassword: async (context, payload) => {
       return await UserService.updatePassword(
-        payload.user,
+        payload.currentUser,
+        payload.userId,
         payload.currentPassword,
         payload.newPassword,
         payload.newPasswordConfirmation
@@ -87,7 +88,19 @@ export default {
           return Promise.resolve({ status: true, message: "success" });
         },
         (error) => {
-          console.log(error);
+          //console.log(error);
+          return Promise.reject(error);
+        }
+      );
+    },
+
+    delete: async (context, payload) => {
+      return await UserService.delete(payload.currentUser, payload.userId).then(
+        (responce) => {
+          return Promise.resolve({ status: true, message: "success" });
+        },
+        (error) => {
+          //console.log(error);
           return Promise.reject(error);
         }
       );

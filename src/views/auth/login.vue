@@ -4,10 +4,11 @@
       <v-row align="center" justify="center">
         <v-col cols="12" sm="12" md="4">
           <v-card class="elevation-12">
-            <v-toolbar color="primary" dark flat>
-              <v-toolbar-title>Login</v-toolbar-title>
-              <v-spacer></v-spacer>
-            </v-toolbar>
+            <v-app-bar flat>
+              <v-toolbar-title class="title grey--text">
+                Login
+              </v-toolbar-title>
+            </v-app-bar>
 
             <v-card-text>
               <v-form v-model="isValid">
@@ -40,12 +41,12 @@
                 </v-text-field>
 
                 <v-btn
-                  color="light-blue lighten-1"
+                  color="light-blue lighten-1 white--text"
                   @click.native="submitLogin()"
                   :disabled="!isValid"
                   :loading="loading"
                 >
-                  Login
+                  Sign In
                 </v-btn>
               </v-form>
             </v-card-text>

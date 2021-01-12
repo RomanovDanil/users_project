@@ -142,12 +142,7 @@
                     </v-toolbar-title>
                   </v-app-bar>
                   <v-col class="pl-5">
-                    <v-row
-                      v-if="
-                        !currentUser.userData.pin ||
-                          currentUser.userData.pin != ''
-                      "
-                    >
+                    <v-row v-if="!isEmpty(currentUser.userData.pin)">
                       <v-col>
                         <strong>PIN: **** </strong>
                       </v-col>
@@ -241,6 +236,7 @@ export default {
           this.uploadImage();
         };
         reader.readAsDataURL(selectedImage);
+        this.$refs.file.value = null;
       } else {
         console.log("File not selected");
       }
@@ -257,6 +253,9 @@ export default {
         .catch((data) => {
           console.log({ data: data, status: false });
         });
+    },
+    isEmpty(value) {
+      return value == "" || value == null || value == undefined;
     },
   },
 };

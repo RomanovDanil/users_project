@@ -1,13 +1,18 @@
 <template>
   <v-app>
     <v-progress-linear
-      :indeterminate="loadEventProgress"
-      :active="show"
+      :indeterminate="eventLoading"
+      :active="eventLoading"
     ></v-progress-linear>
-    <v-container fluid v-if="!loadEventProgress">
-      <v-row class="ma-0 pa-0" justify="center">
-        <v-col cols="12" sm="12" md="5">
-          <v-row class="mx-0" v-if="event != null && event != undefined">
+    <v-container fluid>
+      <v-row class="ma-0 pa-0" justify="center" v-if="!eventLoading">
+        <v-col
+          cols="12"
+          sm="12"
+          md="5"
+          v-if="event != null && event != undefined"
+        >
+          <v-row class="mx-0">
             <v-col cols="12" md="4" sm="12" xl="12">
               <v-img
                 height="250"
@@ -154,8 +159,47 @@
               </v-row>
             </v-col>
           </v-row>
-
-          <v-row class="mx-0" v-else>
+          <v-row justify="center" class="pa-5 mt-5">
+            <v-col cols="auto">
+              <v-btn text color="error" @click="openDialogRemove">
+                Delete event
+              </v-btn>
+            </v-col>
+            <template>
+              <v-dialog v-model="dialogRemove" persistent max-width="600px">
+                <v-card class="pa-3">
+                  <v-card-title>
+                    <v-spacer> </v-spacer>
+                    <v-btn
+                      @click="closeDialogRemove"
+                      :disabled="loadingRemove"
+                      icon
+                    >
+                      <v-icon>close</v-icon>
+                    </v-btn>
+                  </v-card-title>
+                  <v-col cols="12" md="12" xl="12" sm="12">
+                    <v-card-title class="justify-center">
+                      Do you really want to delete the event?
+                    </v-card-title>
+                    <v-col cols="12" md="12" sm="12" xl="12">
+                      <v-btn
+                        text
+                        :loading="loadingRemove"
+                        color="error"
+                        @click.native="remove()"
+                      >
+                        Delete
+                      </v-btn>
+                    </v-col>
+                  </v-col>
+                </v-card>
+              </v-dialog>
+            </template>
+          </v-row>
+        </v-col>
+        <v-col cols="12" sm="12" md="5" v-else>
+          <v-row class="mx-0">
             Current event not found
           </v-row>
         </v-col>
@@ -164,10 +208,10 @@
       <v-snackbar
         timeout="6000"
         bottom="bottom"
-        :color="color"
+        :color="snackbar_color"
         v-model="snackbar"
       >
-        {{ message }}
+        {{ snackbar_message }}
       </v-snackbar>
     </v-container>
   </v-app>
@@ -183,14 +227,15 @@ export default {
   props: ["eventId"],
   data: () => ({
     snackbar: false,
-    message: "",
+    snackbar_message: "",
+    snackbar_color: "red lighten-1",
     event: null,
-    color: "red lighten-1",
-    loadEventProgress: true,
-    show: true,
+    eventLoading: true,
     uploadImageLoading: false,
     deleteImageLoading: false,
     imageDisabled: false,
+    loadingRemove: false,
+    dialogRemove: false,
   }),
   computed: {
     currentUser() {
@@ -233,13 +278,13 @@ export default {
           this.event = data.event;
         })
         .catch((error) => {
-          if (error.response) this.message = error.response.data.message;
-          else this.message = error.message;
-          this.color = "red lighten-1";
+          if (error.response)
+            this.snackbar_message = error.response.data.message;
+          else this.snackbar_message = error.message;
+          this.snackbar_color = "red lighten-1";
           this.snackbar = true;
         });
-      this.loadEventProgress = false;
-      this.show = false;
+      this.eventLoading = false;
     },
     assign() {
       this.$router.push({ name: "Events.Assign" });
@@ -256,9 +301,10 @@ export default {
           this.event.image = "";
         })
         .catch((error) => {
-          if (error.response) this.message = error.response.data.message;
-          else this.message = error.message;
-          this.color = "red lighten-1";
+          if (error.response)
+            this.snackbar_message = error.response.data.message;
+          else this.snackbar_message = error.message;
+          this.snackbar_color = "red lighten-1";
           this.snackbar = true;
         });
       this.deleteImageLoading = false;
@@ -278,9 +324,10 @@ export default {
           this.uploadImage(imageBase64);
         };
         reader.readAsDataURL(selectedImage);
+        this.$refs.file.value = null;
       } else {
-        this.message = "Image not selected";
-        this.color = "red lighten-1";
+        this.snackbar_message = "Image not selected";
+        this.snackbar_color = "red lighten-1";
         this.snackbar = true;
       }
     },
@@ -295,18 +342,47 @@ export default {
         })
         .then((data) => {
           this.event.image = data.image;
-          this.color = "success";
-          this.message = "Image uploaded success";
+          this.snackbar_color = "success";
+          this.snackbar_message = "Image successfully uploaded";
           this.snackbar = true;
         })
         .catch((data) => {
-          if (error.response) this.message = error.response.data.message;
-          else this.message = error.message;
-          this.color = "red lighten-1";
+          if (error.response)
+            this.snackbar_message = error.response.data.message;
+          else this.snackbar_message = error.message;
+          this.snackbar_color = "red lighten-1";
           this.snackbar = true;
         });
       this.uploadImageLoading = false;
       this.imageDisabled = false;
+    },
+    closeDialogRemove() {
+      this.dialogRemove = false;
+    },
+    openDialogRemove() {
+      this.dialogRemove = true;
+    },
+    async remove() {
+      this.loadingRemove = true;
+      await this.$store
+        .dispatch("event/delete", {
+          currentUser: this.currentUser,
+          eventId: this.eventId,
+        })
+        .then((data) => {
+          this.event = null;
+          this.snackbar_color = "success";
+          this.snackbar_message = "Event successfully deleted";
+          this.snackbar = true;
+        })
+        .catch((error) => {
+          if (error.response)
+            this.snackbar_message = error.response.data.message;
+          else this.snackbar_message = error.message;
+          this.color = "red lighten-1";
+          this.snackbar = true;
+        });
+      this.loadingRemove = false;
     },
   },
 };

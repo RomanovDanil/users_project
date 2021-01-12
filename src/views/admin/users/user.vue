@@ -1,13 +1,18 @@
 <template>
   <v-app>
     <v-progress-linear
-      :indeterminate="loadUserProgress"
-      :active="showProgress"
+      :indeterminate="userLoading"
+      :active="userLoading"
     ></v-progress-linear>
     <v-container fluid>
-      <v-row class="ma-0 pa-0" justify="center">
-        <v-col cols="12" sm="12" md="5" v-if="!loadUserProgress">
-          <v-row class="mx-0" v-if="user != null">
+      <v-row class="ma-0 pa-0" justify="center" v-if="!userLoading">
+        <v-col
+          cols="12"
+          sm="12"
+          md="5"
+          v-if="user != null && user != undefined"
+        >
+          <v-row class="mx-0">
             <v-col cols="4">
               <v-img
                 height="250"
@@ -100,14 +105,60 @@
               </v-row>
             </v-col>
           </v-row>
-          <v-card v-else>
-            <v-card-title>
-              User not found.
-            </v-card-title>
-          </v-card>
+          <v-row justify="center" class="pa-5 mt-5">
+            <v-col cols="auto">
+              <v-btn text color="error" @click="openDialogRemove">
+                Delete user
+              </v-btn>
+            </v-col>
+            <template>
+              <v-dialog v-model="dialogRemove" persistent max-width="600px">
+                <v-card class="pa-3">
+                  <v-card-title>
+                    <v-spacer> </v-spacer>
+                    <v-btn
+                      @click="closeDialogRemove"
+                      :disabled="loadingRemove"
+                      icon
+                    >
+                      <v-icon>close</v-icon>
+                    </v-btn>
+                  </v-card-title>
+                  <v-col cols="12" md="12" xl="12" sm="12">
+                    <v-card-title class="justify-center">
+                      Do you really want to delete the user?
+                    </v-card-title>
+                    <v-col cols="12" md="12" sm="12" xl="12">
+                      <v-btn
+                        text
+                        :loading="loadingRemove"
+                        color="error"
+                        @click="remove"
+                      >
+                        Delete
+                      </v-btn>
+                    </v-col>
+                  </v-col>
+                </v-card>
+              </v-dialog>
+            </template>
+          </v-row>
+        </v-col>
+        <v-col cols="12" sm="12" md="5" v-else>
+          <v-card-title>
+            User not found
+          </v-card-title>
         </v-col>
       </v-row>
     </v-container>
+    <v-snackbar
+      timeout="6000"
+      bottom="bottom"
+      :color="snackbar_color"
+      v-model="snackbar"
+    >
+      {{ snackbar_message }}
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -117,8 +168,10 @@ export default {
   props: ["userId"],
   data: () => ({
     user: null,
-    loadedSuccess: false,
-    loadUserProgress: true,
+    loadedSuccess: true,
+    userLoading: true,
+    loadingRemove: false,
+    dialogRemove: false,
     showProgress: true,
     snackbar_color: "red lighten-1",
     snackbar_message: "",
@@ -165,8 +218,36 @@ export default {
           this.snackbar = true;
           this.loadedSuccess = false;
         });
-      this.loadUserProgress = false;
-      this.showProgress = false;
+      this.userLoading = false;
+    },
+    closeDialogRemove() {
+      this.dialogRemove = false;
+    },
+    openDialogRemove() {
+      this.dialogRemove = true;
+    },
+    async remove() {
+      console.log(this.userId);
+      this.loadingRemove = true;
+      await this.$store
+        .dispatch("user/delete", {
+          currentUser: this.currentUser,
+          userId: this.userId,
+        })
+        .then((data) => {
+          this.user = null;
+          this.snackbar_color = "success";
+          this.snackbar_message = "Event successfully deleted";
+          this.snackbar = true;
+        })
+        .catch((error) => {
+          if (error.response)
+            this.snackbar_message = error.response.data.message;
+          else this.snackbar_message = error.message;
+          this.snackbar_color = "red lighten-1";
+          this.snackbar = true;
+        });
+      this.loadingRemove = false;
     },
   },
 };

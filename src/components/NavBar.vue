@@ -95,50 +95,51 @@
 <script>
 export default {
   name: "Navbar",
-  props: ["currentUser"],
   data: () => ({
     drawer: false,
-    links: [],
   }),
   computed: {
     pageName() {
       return this.$store.state.pages.page_name;
     },
-  },
-  created() {
-    if (this.currentUser) {
-      if (this.currentUser.isAdmin) {
-        this.links = [
-          {
-            text: "Profile",
-            icon: "perm_identity",
-            route: "/profile",
-            sublinks: null,
-          },
-          {
-            text: "Home",
-            icon: "home",
-            route: "/home",
-            sublinks: null,
-          },
-        ];
-      } else {
-        this.links = [
-          {
-            text: "Profile",
-            icon: "perm_identity",
-            route: "/profile",
-            sublinks: null,
-          },
-          {
-            text: "Event",
-            icon: "event",
-            route: "/user_event",
-            sublinks: null,
-          },
-        ];
+    currentUser() {
+      return this.$store.state.auth.user;
+    },
+    links() {
+      if (this.currentUser) {
+        if (this.currentUser.isAdmin) {
+          return [
+            {
+              text: "Profile",
+              icon: "perm_identity",
+              route: "/profile",
+              sublinks: null,
+            },
+            {
+              text: "Home",
+              icon: "home",
+              route: "/home",
+              sublinks: null,
+            },
+          ];
+        } else {
+          return [
+            {
+              text: "Profile",
+              icon: "perm_identity",
+              route: "/profile",
+              sublinks: null,
+            },
+            {
+              text: "Event",
+              icon: "event",
+              route: "/user_event",
+              sublinks: null,
+            },
+          ];
+        }
       }
-    }
+    },
   },
   mounted() {},
   beforeUpdate() {},

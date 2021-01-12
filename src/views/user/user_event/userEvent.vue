@@ -74,6 +74,8 @@
                     <v-chip class="success--text" color="white" v-else>
                       SIGNED
                     </v-chip>
+                  </template>
+                  <template v-slot:top>
                     <SignDocument
                       v-bind:dialog.sync="signDocumentDialog"
                       v-bind:documents.sync="event.documents"

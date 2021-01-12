@@ -238,14 +238,17 @@
                 </v-row>
               </v-col>
             </v-row>
-
-            <v-btn
-              color="primary"
-              @click.native="EventCreate()"
-              :disabled="!isValid"
-              :loading="loading"
-              >Create</v-btn
-            >
+            <v-row>
+              <v-col>
+                <v-btn
+                  color="primary"
+                  @click.native="EventCreate()"
+                  :disabled="!isValid"
+                  :loading="loading"
+                  >Create</v-btn
+                >
+              </v-col>
+            </v-row>
           </v-card>
 
           <v-snackbar
@@ -334,42 +337,41 @@ export default {
       }
     },
     async EventCreate() {
-      console.log(this.start_date);
-      // this.loading = true;
-      // await EventService.create(
-      //   this.currentUser,
-      //   this.title,
-      //   this.start_date,
-      //   this.c_1_date,
-      //   this.c_plus_1_date,
-      //   this.finish_date,
-      //   this.imageBase64
-      // )
-      //   .then(() => {
-      //     this.message = "Event was created success";
-      //     this.color = "success";
-      //     this.snackbar = true;
-      //   })
-      //   .catch((error) => {
-      //     let errorMessage = "";
-      //     if (error.response) {
-      //       errorMessage = error.response.data.message;
-      //       if (error.response.data.errors) {
-      //         errorMessage += ": ";
-      //         const errors = error.response.data.errors;
-      //         for (let i = 0; i < errors.length; i++) {
-      //           errorMessage += errors[i].msg + "; ";
-      //         }
-      //       }
-      //     } else {
-      //       if (error.message) errorMessage = error.message;
-      //       else errorMessage = error;
-      //     }
-      //     this.message = errorMessage;
-      //     this.color = "red lighten-1";
-      //     this.snackbar = true;
-      //   });
-      // this.loading = false;
+      this.loading = true;
+      await EventService.create(
+        this.currentUser,
+        this.title,
+        this.start_date,
+        this.c_1_date,
+        this.c_plus_1_date,
+        this.finish_date,
+        this.imageBase64
+      )
+        .then(() => {
+          this.message = "Event was created success";
+          this.color = "success";
+          this.snackbar = true;
+        })
+        .catch((error) => {
+          let errorMessage = "";
+          if (error.response) {
+            errorMessage = error.response.data.message;
+            if (error.response.data.errors) {
+              errorMessage += ": ";
+              const errors = error.response.data.errors;
+              for (let i = 0; i < errors.length; i++) {
+                errorMessage += errors[i].msg + "; ";
+              }
+            }
+          } else {
+            if (error.message) errorMessage = error.message;
+            else errorMessage = error;
+          }
+          this.message = errorMessage;
+          this.color = "red lighten-1";
+          this.snackbar = true;
+        });
+      this.loading = false;
     },
   },
 };

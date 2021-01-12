@@ -1,101 +1,107 @@
 <template>
-  <v-card>
-    <v-data-table
-      dense
-      :headers="headers"
-      :items="sortedUsersEvents"
-      :loading="usersLoading"
-      loading-text="Loading... Please wait"
-      item-key="_id"
-      class="elevation-1"
-      :hide-default-footer="false"
-      v-if="loadedSuccess"
-    >
-      <template v-slot:[`item.user`]="{ item }">
-        {{ item.userData.firstName }} {{ item.userData.secondName }}
-        {{ item.userData.thirdName }}
-      </template>
-      <template v-slot:[`item.event`]="{ item }">
-        <v-select
-          v-if="!item.currentEvent"
-          :items="events"
-          v-model="item.selectedEvent"
-          placeholder="Event"
-          item-text="title"
-          return-object
-          flat
-          clearable
-          :ref="item._id"
-          :error="item.errorEvent"
-          :rules="event_rules"
-          @change="handleChangeEvent(item)"
-        ></v-select>
-        <v-chip v-else>
-          {{
-            events.find((event) => event._id === item.currentEvent._id).title
-          }}
-        </v-chip>
-      </template>
-      <template v-slot:[`item.role`]="{ item }">
-        <v-select
-          v-if="!item.currentEvent"
-          v-model="item.selectedRole"
-          :items="roles"
-          placeholder="Role"
-          item-text="name"
-          return-object
-          flat
-          clearable
-          :rules="role_rules"
-          :error="item.errorRole"
-          @change="handleChangeRole(item)"
-        ></v-select>
-        <v-chip v-else>
-          {{
-            events
-              .find((event) => event._id === item.currentEvent._id)
-              .participants.find(
-                (assignedUser) => assignedUser.user === item._id
-              ).role.name
-          }}
-        </v-chip>
-      </template>
-      <template v-slot:[`item.assign`]="{ item }">
-        <v-btn
-          text
-          color="success"
-          v-if="item.currentEvent == null || item.currentEvent == undefined"
-          @click="assign(item)"
+  <v-row class="mx-0">
+    <v-col cols="12" md="12" sm="12" xs="12" v-if="loadedSuccess">
+      <v-card>
+        <v-data-table
+          dense
+          :headers="headers"
+          :items="sortedUsersEvents"
+          :loading="usersLoading"
+          loading-text="Loading... Please wait"
+          item-key="_id"
+          class="elevation-1"
+          :hide-default-footer="false"
         >
-          Assign
-        </v-btn>
-        <v-btn text color="error" v-else @click="remove(item)">
-          Remove
-        </v-btn>
-      </template>
-      <template v-slot:top>
-        <AssignUserToEvent
-          v-bind:dialogAssign.sync="dialogAssign"
-          v-bind:currentUser="currentUser"
-          v-bind:snackbar.sync="snackbar"
-          v-bind:snackbar_message.sync="snackbar_message"
-          v-bind:snackbar_color.sync="snackbar_color"
-          v-bind:selectedItem.sync="selectedItem"
-        />
-        <RemoveUserFromEvent
-          v-bind:dialogRemove.sync="dialogRemove"
-          v-bind:currentUser="currentUser"
-          v-bind:snackbar.sync="snackbar"
-          v-bind:snackbar_message.sync="snackbar_message"
-          v-bind:snackbar_color.sync="snackbar_color"
-          v-bind:selectedItem.sync="selectedItem"
-          v-bind:events.sync="events"
-        />
-      </template>
-    </v-data-table>
-    <v-card-text v-else>
-      Events not found
-    </v-card-text>
+          <template v-slot:[`item.user`]="{ item }">
+            {{ item.userData.firstName }} {{ item.userData.secondName }}
+            {{ item.userData.thirdName }}
+          </template>
+          <template v-slot:[`item.event`]="{ item }">
+            <v-select
+              v-if="!item.currentEvent"
+              :items="events"
+              v-model="item.selectedEvent"
+              placeholder="Event"
+              item-text="title"
+              return-object
+              flat
+              clearable
+              :ref="item._id"
+              :error="item.errorEvent"
+              :rules="event_rules"
+              @change="handleChangeEvent(item)"
+            ></v-select>
+            <v-chip v-else>
+              {{
+                events.find((event) => event._id === item.currentEvent._id)
+                  .title
+              }}
+            </v-chip>
+          </template>
+          <template v-slot:[`item.role`]="{ item }">
+            <v-select
+              v-if="!item.currentEvent"
+              v-model="item.selectedRole"
+              :items="roles"
+              placeholder="Role"
+              item-text="name"
+              return-object
+              flat
+              clearable
+              :rules="role_rules"
+              :error="item.errorRole"
+              @change="handleChangeRole(item)"
+            ></v-select>
+            <v-chip v-else>
+              {{
+                events
+                  .find((event) => event._id === item.currentEvent._id)
+                  .participants.find(
+                    (assignedUser) => assignedUser.user === item._id
+                  ).role.name
+              }}
+            </v-chip>
+          </template>
+          <template v-slot:[`item.assign`]="{ item }">
+            <v-btn
+              text
+              color="success"
+              v-if="item.currentEvent == null || item.currentEvent == undefined"
+              @click="assign(item)"
+            >
+              Assign
+            </v-btn>
+            <v-btn text color="error" v-else @click="remove(item)">
+              Remove
+            </v-btn>
+          </template>
+          <template v-slot:top>
+            <AssignUserToEvent
+              v-bind:dialogAssign.sync="dialogAssign"
+              v-bind:currentUser="currentUser"
+              v-bind:snackbar.sync="snackbar"
+              v-bind:snackbar_message.sync="snackbar_message"
+              v-bind:snackbar_color.sync="snackbar_color"
+              v-bind:selectedItem.sync="selectedItem"
+            />
+            <RemoveUserFromEvent
+              v-bind:dialogRemove.sync="dialogRemove"
+              v-bind:currentUser="currentUser"
+              v-bind:snackbar.sync="snackbar"
+              v-bind:snackbar_message.sync="snackbar_message"
+              v-bind:snackbar_color.sync="snackbar_color"
+              v-bind:selectedItem.sync="selectedItem"
+              v-bind:events.sync="events"
+            />
+          </template>
+        </v-data-table>
+      </v-card>
+    </v-col>
+    <v-col cols="12" md="12" sm="12" xs="12" v-else>
+      <v-card-title>
+        Events not found
+      </v-card-title>
+    </v-col>
     <v-snackbar
       timeout="6000"
       bottom="bottom"
@@ -104,7 +110,7 @@
     >
       {{ snackbar_message }}
     </v-snackbar>
-  </v-card>
+  </v-row>
 </template>
 
 <script>
@@ -121,10 +127,10 @@ export default {
     },
     sortedUsersEvents() {
       return this.users.slice().sort((a, b) => {
-        if (this.isEmpty(a.currentEvent) !== this.isEmpty(b.currentEvent)) {
+        if (this.isEmpty(a.currentEvent) != this.isEmpty(b.currentEvent)) {
           return this.isEmpty(a.currentEvent) ? -1 : 1;
         } else {
-          return a.created_at > b.created_at ? 1 : -1;
+          return new Date(a.created_at) >= new Date(b.created_at) ? 1 : -1;
         }
       });
     },
@@ -193,11 +199,18 @@ export default {
     },
     async loadUsersEvents() {
       this.usersLoading = true;
-      await EventService.getAssignedUsers(this.currentUser)
-        .then((response) => {
-          this.users = response.data.users;
-          this.events = response.data.events;
-          this.roles = response.data.roles;
+      await this.$store
+        .dispatch("event/getAssignedUsers", { currentUser: this.currentUser })
+        .then((data) => {
+          if (data.events == null || data.events == undefined) {
+            this.loadedSuccess = false;
+          } else if (data.events.length == 0) {
+            this.loadedSuccess = false;
+          } else {
+            this.users = data.users;
+            this.events = data.events;
+            this.roles = data.roles;
+          }
         })
         .catch((error) => {
           if (error.response) {

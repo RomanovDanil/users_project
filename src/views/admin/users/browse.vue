@@ -2,9 +2,9 @@
   <v-app>
     <v-container fluid>
       <v-row justify="center">
-        <v-col cols="12" sm="12" md="6" class="ma-0 pa-0">
+        <v-col cols="12" sm="12" md="6" class="ma-0 pa-0" v-if="loadedSuccess">
           <v-row class="mx-0">
-            <v-col cols="12" class="text-left" v-if="loadedSuccess">
+            <v-col cols="12" class="text-left">
               <v-card-title>
                 User's list
                 <v-spacer></v-spacer>
@@ -23,22 +23,21 @@
               >
               </v-data-table>
             </v-col>
-            <v-col cols="12" class="text-left" v-else>
-              <v-card-text>Users not found</v-card-text>
-            </v-col>
           </v-row>
-
-          <v-snackbar
-            timeout="6000"
-            bottom="bottom"
-            color="red lighten-1"
-            v-model="snackbar"
-          >
-            {{ message }}
-          </v-snackbar>
+        </v-col>
+        <v-col cols="12" sm="12" md="6" class="ma-0 pa-0" v-else>
+          <v-card-title>Users not found</v-card-title>
         </v-col>
       </v-row>
     </v-container>
+    <v-snackbar
+      timeout="6000"
+      bottom="bottom"
+      color="red lighten-1"
+      v-model="snackbar"
+    >
+      {{ message }}
+    </v-snackbar>
   </v-app>
 </template>
 
